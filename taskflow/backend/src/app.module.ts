@@ -8,6 +8,7 @@ import { DatabaseModule } from './database/database.module';
 import { DatabaseModelsModule } from './database/models/database-models.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ProjectsModule } from './projects/projects.module';
+import { ReportsModule } from './reports/reports.module';
 import { TasksModule } from './tasks/tasks.module';
 import { UsersModule } from './users/users.module';
 
@@ -53,6 +54,9 @@ import { UsersModule } from './users/users.module';
     // NotificationsModule powers the event-driven notification system (FR-008.1-4).
     // Its NotificationListener subscribes to events emitted by Tasks and Comments.
     NotificationsModule,
+
+    // ReportsModule aggregates project and employee data for reports (FR-009.1-3).
+    ReportsModule,
 
     // AuthModule encapsulates User authentication, Passport JWT strategy, and session tokens.
     AuthModule,
