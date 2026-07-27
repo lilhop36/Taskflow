@@ -1,4 +1,6 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param } from '@nestjs/common';
+import { Roles } from '../common/decorators/roles.decorator';
+import { UserRole } from '../users/schemas/user.schema';
 import { ReportsService } from './reports.service';
 
 /**
@@ -8,10 +10,10 @@ import { ReportsService } from './reports.service';
  *   GET /api/reports/project/:projectId   — Project status report (FR-009.1)
  *   GET /api/reports/employee/:userId     — Employee perf report (FR-009.2)
  *
- * FR-009.3 (Project Manager restriction) will be enforced once
- * the global JwtAuthGuard + RolesGuard are wired in a future sprint.
+ * FR-009.3: Report generation restricted to Project Managers and Administrators.
  */
 @Controller('reports')
+@Roles(UserRole.PROJECT_MANAGER)
 export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}
 

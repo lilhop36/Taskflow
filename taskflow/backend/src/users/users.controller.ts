@@ -8,6 +8,8 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
+import { Roles } from '../common/decorators/roles.decorator';
+import { UserRole } from './schemas/user.schema';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UsersService } from './users.service';
@@ -21,6 +23,7 @@ import { UsersService } from './users.service';
  * - Delegate all business logic and validation handling to underlying layers.
  */
 @Controller('users')
+@Roles(UserRole.ADMIN)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
