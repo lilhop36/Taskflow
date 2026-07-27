@@ -1,9 +1,14 @@
+import cookieParser from 'cookie-parser';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // cookie-parser enables reading HTTP-only cookies in request.cookies.
+  // Required by JwtStrategy to extract access_token from cookies.
+  app.use(cookieParser());
 
   // Global ValidationPipe — runs DTO validation on every incoming request.
   //
