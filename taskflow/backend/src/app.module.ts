@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
+import * as Joi from 'joi';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AuthModule } from './auth/auth.module';
 import { CommentsModule } from './comments/comments.module';
@@ -13,6 +14,7 @@ import { ReportsModule } from './reports/reports.module';
 import { TasksModule } from './tasks/tasks.module';
 import { TeamsModule } from './teams/teams.module';
 import { UsersModule } from './users/users.module';
+import { HealthModule } from './health/health.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 
@@ -26,6 +28,12 @@ import { RolesGuard } from './common/guards/roles.guard';
       isGlobal: true,
       envFilePath: '.env',
       load: [jwtConfig],
+      validationSchema: Joi.object({
+        MONGODB_URI: Joi.string().uri().required(),
+        JWT_ACCESS_SECRET: Joi.string().min(10).required(),
+        JWT_REFRESH_SECRET: Joi.string().min(10).required(),
+        PORT: Joi.number().optional(),
+      }),
     }),
 
     // EventEmitterModule enables the NestJS event system.
@@ -67,6 +75,8 @@ import { RolesGuard } from './common/guards/roles.guard';
 
     // AuthModule encapsulates User authentication, Passport JWT strategy, and session tokens.
     AuthModule,
+    // Health checks and readiness endpoint
+    HealthModule,
   ],
   controllers: [],
   providers: [
