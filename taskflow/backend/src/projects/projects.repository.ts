@@ -24,6 +24,7 @@ export class ProjectsRepository {
       .find()
       .populate('owner', '-passwordHash')
       .populate('members', '-passwordHash')
+      .populate('teams', 'name description')
       .exec();
   }
 
@@ -32,6 +33,7 @@ export class ProjectsRepository {
       .findById(id)
       .populate('owner', '-passwordHash')
       .populate('members', '-passwordHash')
+      .populate('teams', 'name description')
       .exec();
   }
 
@@ -43,6 +45,7 @@ export class ProjectsRepository {
       .findByIdAndUpdate(id, data, { new: true, runValidators: true })
       .populate('owner', '-passwordHash')
       .populate('members', '-passwordHash')
+      .populate('teams', 'name description')
       .exec();
   }
 
@@ -62,5 +65,19 @@ export class ProjectsRepository {
       project: new Types.ObjectId(id),
       status: { $ne: TaskStatus.DONE },
     }).exec();
+  }
+
+  async isUserMemberOfProject(userId: string, projectId: string): Promise<boolean> {
+    const project = await this.projectModel
+      .findById(projectId)
+      .select('members')
+      .exec();
+
+    if (!project) {
+      return false;
+    }
+
+    // Check if userId exists in the members array
+    return project.members.some(memberId => memberId.equals(new Types.ObjectId(userId)));
   }
 }

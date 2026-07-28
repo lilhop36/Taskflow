@@ -12,10 +12,13 @@ import { CommentsRepository } from './comments.repository';
  * - Maintains chronological threads per task (FR-007.1)
  * - Validates user has access to the parent project (FR-007.2)
  * - Author + timestamp appended automatically by Mongoose timestamps (FR-007.3)
+ * - Edit history and soft delete for audit trail (BR-005)
  *
  * Events:
  * - Emits 'comment.created' when a new comment is posted, so the Notification
  *   module can alert the task assignee or project owner.
+ * - Emits 'comment.updated' when a comment is edited.
+ * - Emits 'comment.deleted' when a comment is soft deleted.
  */
 @Injectable()
 export class CommentsService {
@@ -74,10 +77,103 @@ export class CommentsService {
   }
 
   /**
-   * Returns all comments for a task, sorted oldest-first (FR-007.1).
+   * Finds a comment by ID.
+   * Used for ownership verification and direct access.
    */
-  async findByTask(taskId: string) {
-    const comments = await this.commentsRepository.findByTask(taskId);
+  async findCommentById(commentId: string) {
+    return this.commentsRepository.findById(commentId);
+  }
+
+  /**
+   * Updates a comment with new content.
+   * Step 1: Verify the comment exists.
+   * Step 2: Update the comment and record the edit in history.
+   * Step 3: Emit an event for notification/audit purposes.
+   *
+   * BR-005: Maintains edit history and sets isEdited flag.
+   */
+  async updateComment(
+    commentId: string,
+    content: string,
+    updatedBy: string,
+  ) {
+    // Step 1: Verify the comment exists
+    const comment = await this.commentsRepository.findById(commentId);
+    if (!comment) {
+      throw new NotFoundException(`Comment with ID ${commentId} not found`);
+    }
+
+    // Step 2: Update the comment and record edit history
+    const updatedComment = await this.commentsRepository.updateComment(
+      commentId,
+      content,
+      updatedBy,
+    );
+    if (!updatedComment) {
+      throw new NotFoundException(`Comment with ID ${commentId} not found`);
+    }
+
+    // Step 3: Fire event for notification/audit listeners
+    this.eventEmitter.emit('comment.updated', {
+      commentId,
+      updatedBy,
+      updatedAt: new Date(),
+    });
+
+    return updatedComment.toObject();
+  }
+
+  /**
+   * Soft deletes a comment (marks as deleted but preserves for audit).
+   * Step 1: Verify the comment exists.
+   * Step 2: Mark the comment as deleted with deletion info.
+   * Step 3: Emit an event for notification/audit purposes.
+   *
+   * BR-005: Maintains deletion audit trail with deletedAt and deletedBy.
+   */
+  async deleteComment(
+    commentId: string,
+    deletedBy: string,
+  ) {
+    // Step 1: Verify the comment exists
+    const comment = await this.commentsRepository.findById(commentId);
+    if (!comment) {
+      throw new NotFoundException(`Comment with ID ${commentId} not found`);
+    }
+
+    // Step 2: Soft delete the comment
+    const deletedComment = await this.commentsRepository.softDelete(
+      commentId,
+      deletedBy,
+    );
+    if (!deletedComment) {
+      throw new NotFoundException(`Comment with ID ${commentId} not found`);
+    }
+
+    // Step 3: Fire event for notification/audit listeners
+    this.eventEmitter.emit('comment.deleted', {
+      commentId,
+      deletedBy,
+      deletedAt: new Date(),
+    });
+
+    return deletedComment.toObject();
+  }
+
+  /**
+   * Returns all comments for a task, sorted oldest-first (FR-007.1).
+   * Filters out soft-deleted comments unless explicitly requested to include them.
+   */
+  async findByTask(
+    taskId: string,
+    includeDeleted: boolean = false,
+  ) {
+    const filter: any = { task: new Types.ObjectId(taskId) };
+    if (!includeDeleted) {
+      filter.deletedAt = { $exists: false };
+    }
+
+    const comments = await this.commentsRepository.findByTaskWithFilter(filter);
     return comments.map((c) => c.toObject());
   }
 }

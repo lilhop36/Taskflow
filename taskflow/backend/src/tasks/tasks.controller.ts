@@ -9,11 +9,14 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
+import { Roles } from '../common/decorators/roles.decorator';
+import { UserRole } from '../users/schemas/user.schema';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { UpdateTaskStatusDto } from './dto/update-task-status.dto';
 import { TasksService } from './tasks.service';
 
+@Roles(UserRole.PROJECT_MANAGER, UserRole.ADMIN)
 @Controller('tasks')
 export class TasksController {
   constructor(private readonly tasksService: TasksService) {}

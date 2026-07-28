@@ -5,14 +5,13 @@ import {
   Patch,
 } from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
 
 /**
  * Controller for notification endpoints.
  *
  * Routes are under /api/notifications (user-scoped).
  * userId is resolved from the JWT token via @CurrentUser().
- * Until guards are wired globally, endpoints return empty data
- * because there's no authenticated user context.
  *
  * SRS: FR-008.4 — Notification Center
  */
@@ -27,8 +26,8 @@ export class NotificationsController {
    * GET /api/notifications
    */
   @Get()
-  async findUnread() {
-    return this.notificationsService.findUnreadByUser('');
+  async findUnread(@CurrentUser('_id') userId: string) {
+    return this.notificationsService.findUnreadByUser(userId);
   }
 
   /**
@@ -45,7 +44,7 @@ export class NotificationsController {
    * PATCH /api/notifications/read-all
    */
   @Patch('read-all')
-  async markAllAsRead() {
-    return this.notificationsService.markAllAsRead('');
+  async markAllAsRead(@CurrentUser('_id') userId: string) {
+    return this.notificationsService.markAllAsRead(userId);
   }
 }

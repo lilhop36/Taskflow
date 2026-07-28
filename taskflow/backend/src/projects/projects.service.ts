@@ -78,4 +78,8 @@ export class ProjectsService {
     }
     return archived.toObject();
   }
+
+  async isUserMemberOfProject(userId: string, projectId: string): Promise<boolean> {
+    return this.projectsRepository.isUserMemberOfProject(userId, projectId);
+  }
 }

@@ -3,22 +3,6 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 
-// Minimal runtime environment validation.
-// Fail fast with a clear error when important env vars are missing.
-function assertEnv(name: string) {
-  if (!process.env[name]) {
-    console.error(`Missing required environment variable: ${name}`);
-    process.exit(1);
-  }
-}
-
-// Required for database connection and secure JWT signing.
-assertEnv('MONGODB_URI');
-// The JWT secrets have safe defaults for local development but
-// should be provided in production. We still warn/require them here.
-assertEnv('JWT_ACCESS_SECRET');
-assertEnv('JWT_REFRESH_SECRET');
-
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
