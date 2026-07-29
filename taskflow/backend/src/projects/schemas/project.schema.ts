@@ -30,6 +30,9 @@ export class Project {
 
   @Prop({ type: [{ type: Types.ObjectId, ref: 'User' }], default: [] })
   members: Types.ObjectId[];
+
+  @Prop({ type: [{ type: Types.ObjectId, ref: 'Team' }], default: [] })
+  teams: Types.ObjectId[];
 }
 
 export const ProjectSchema = SchemaFactory.createForClass(Project);

@@ -25,8 +25,10 @@ export default function LoginPage() {
     setError('');
     setSubmitting(true);
     try {
-      await login(email, password);
-      router.push('/dashboard');
+      const user = await login(email, password);
+      if (user.role === 'Administrator') router.push('/users');
+      else if (user.role === 'ProjectManager') router.push('/dashboard');
+      else router.push('/tasks');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Login failed. Check your credentials.');
     } finally {

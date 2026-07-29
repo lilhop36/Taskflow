@@ -22,6 +22,36 @@ export class TasksService {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
+  /**
+   * FR-008.3: Emits a "deadline urgent" event for an incomplete task whose
+   * due date is within 24 hours. The NotificationListener reacts and
+   * creates a DeadlineUrgent notification for the assignee.
+   */
+  private maybeEmitDeadlineUrgent(
+    taskId: string,
+    taskTitle: string,
+    assigneeId: string | undefined,
+    status: TaskStatus,
+    dueDate: Date,
+  ) {
+    if (!assigneeId) return;
+    if (status === TaskStatus.DONE) return;
+
+    const now = Date.now();
+    const due = new Date(dueDate).getTime();
+    const hoursRemaining = (due - now) / (1000 * 60 * 60);
+
+    if (hoursRemaining > 0 && hoursRemaining <= 24) {
+      this.eventEmitter.emit('task.deadline-urgent', {
+        taskId,
+        taskTitle,
+        assigneeId,
+        dueDate: new Date(dueDate),
+        hoursRemaining: Math.round(hoursRemaining),
+      });
+    }
+  }
+
   async create(createTaskDto: CreateTaskDto, currentUserId?: string) {
     const project = await this.projectsRepository.findById(
       createTaskDto.project,
@@ -74,6 +104,15 @@ export class TasksService {
       taskTitle: createTaskDto.title,
       assignedBy: currentUserId ?? 'system',
     });
+
+    // FR-008.3: Emit deadline-urgent if due date is within 24 hours
+    this.maybeEmitDeadlineUrgent(
+      task._id.toString(),
+      task.title,
+      task.assignee?.toString(),
+      task.status,
+      task.dueDate,
+    );
 
     return task.toObject();
   }
@@ -155,6 +194,18 @@ export class TasksService {
     if (!updated) {
       throw new NotFoundException(`Task with ID ${id} not found`);
     }
+
+    // FR-008.3: Re-check deadline urgency if due date changed
+    if (updateTaskDto.dueDate) {
+      this.maybeEmitDeadlineUrgent(
+        updated._id.toString(),
+        updated.title,
+        updated.assignee?.toString(),
+        updated.status,
+        updated.dueDate,
+      );
+    }
+
     return updated.toObject();
   }
 

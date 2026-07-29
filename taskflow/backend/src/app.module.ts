@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
+import * as Joi from 'joi';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AuthModule } from './auth/auth.module';
 import { CommentsModule } from './comments/comments.module';
@@ -10,7 +12,11 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { ProjectsModule } from './projects/projects.module';
 import { ReportsModule } from './reports/reports.module';
 import { TasksModule } from './tasks/tasks.module';
+import { TeamsModule } from './teams/teams.module';
 import { UsersModule } from './users/users.module';
+import { HealthModule } from './health/health.module';
+import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
+import { RolesGuard } from './common/guards/roles.guard';
 
 @Module({
   imports: [
@@ -22,6 +28,12 @@ import { UsersModule } from './users/users.module';
       isGlobal: true,
       envFilePath: '.env',
       load: [jwtConfig],
+      validationSchema: Joi.object({
+        MONGODB_URI: Joi.string().uri().required(),
+        JWT_ACCESS_SECRET: Joi.string().min(10).required(),
+        JWT_REFRESH_SECRET: Joi.string().min(10).required(),
+        PORT: Joi.number().optional(),
+      }),
     }),
 
     // EventEmitterModule enables the NestJS event system.
@@ -58,10 +70,38 @@ import { UsersModule } from './users/users.module';
     // ReportsModule aggregates project and employee data for reports (FR-009.1-3).
     ReportsModule,
 
+    // TeamsModule enables team creation and member management (FR-003.1-3).
+    TeamsModule,
+
     // AuthModule encapsulates User authentication, Passport JWT strategy, and session tokens.
     AuthModule,
+    // Health checks and readiness endpoint
+    HealthModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [
+    // APP_GUARD is a special NestJS token that registers a guard globally.
+    // Every HTTP request will pass through these guards in the order declared.
+    //
+    // Guard execution order:
+    //   1. JwtAuthGuard — verifies JWT and populates request.user
+    //                     Routes marked @Public() bypass this guard entirely.
+    //   2. RolesGuard   — reads @Roles() metadata and checks request.user.role
+    //                     Routes without @Roles() pass through without restriction.
+    //
+    // This "secure by default" approach means every new route is automatically
+    // protected. Developers must explicitly use @Public() or @Roles() to control
+    // access — they cannot accidentally leave a sensitive route unguarded.
+    //
+    // BR-001: Role-Based Authorization Hierarchy (Admin > PM > Employee)
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
+    },
+  ],
 })
 export class AppModule {}

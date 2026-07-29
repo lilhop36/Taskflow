@@ -1,5 +1,6 @@
 import {
   IsDateString,
+  IsMongoId,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -28,4 +29,7 @@ export class CreateProjectDto {
 
   @IsOptional()
   members: string[];
+
+  @IsOptional()
+  teams: string[];
 }

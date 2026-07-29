@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
   Post,
@@ -11,6 +12,9 @@ import {
 import type { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { Public } from '../common/guards/jwt-auth.guard';
+import type { UserDocument } from '../users/schemas/user.schema';
 
 /**
  * Controller handling HTTP authentication endpoints under /api/auth.
@@ -28,6 +32,7 @@ export class AuthController {
    * FR-001.1 / FR-001.4: Authenticate user & establish session.
    * Exposes POST /api/auth/login
    */
+  @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(
@@ -39,9 +44,22 @@ export class AuthController {
   }
 
   /**
+   * Returns the currently authenticated user.
+   * Called by the frontend AuthProvider on mount to restore session from cookie.
+   * Exposes GET /api/auth/session
+   */
+  @Get('session')
+  async session(@CurrentUser() user: UserDocument) {
+    const userObject = user.toObject();
+    const { passwordHash: _, ...userWithoutPassword } = userObject;
+    return userWithoutPassword;
+  }
+
+  /**
    * Re-issues access token using refresh token from HTTP-only cookie or request body.
    * Exposes POST /api/auth/refresh
    */
+  @Public()
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   async refresh(
@@ -59,6 +77,7 @@ export class AuthController {
    * FR-001.5: Terminate active user session & clear cookies.
    * Exposes POST /api/auth/logout
    */
+  @Public()
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   async logout(@Res({ passthrough: true }) res: Response) {

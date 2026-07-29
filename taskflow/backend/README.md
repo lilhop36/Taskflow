@@ -96,3 +96,18 @@ Nest is an MIT-licensed open source project. It can grow thanks to the sponsors 
 ## License
 
 Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+## Environment variables (project-specific)
+
+The TaskFlow backend requires a running MongoDB instance and the following environment variables set before startup. You can put them in a `.env` file at the project root (the app loads `.env` via `ConfigModule`).
+
+- `MONGODB_URI` — MongoDB connection string (required)
+- `JWT_ACCESS_SECRET` — secret used to sign access tokens (required)
+- `JWT_REFRESH_SECRET` — secret used to sign refresh tokens (required)
+
+The application performs a fast-fail check on startup and will exit with a clear error if any required variables are missing.
+
+## Health endpoint
+
+A lightweight health/readiness endpoint is available at `GET /api/health`. It returns a JSON object with `status`, the current Mongoose connection state, and a timestamp.
+

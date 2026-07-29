@@ -51,7 +51,7 @@ export default function DashboardPage() {
   const completion = total > 0 ? Math.round((done / total) * 100) : 0;
 
   const now = new Date();
-  const overdue = tasks.filter((t) => t.status !== 'Done' && new Date(t.dueDate) < now);
+  const overdue = projectTasks.filter((t) => t.status !== 'Done' && new Date(t.dueDate) < now);
 
   const chartData = [
     { name: 'To Do', count: todo },

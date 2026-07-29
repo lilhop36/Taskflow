@@ -31,4 +31,7 @@ export class UpdateProjectDto {
 
   @IsOptional()
   members?: string[];
+
+  @IsOptional()
+  teams?: string[];
 }

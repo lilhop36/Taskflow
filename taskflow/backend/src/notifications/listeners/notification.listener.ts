@@ -5,6 +5,7 @@ import { NotificationType } from '../schemas/notification.schema';
 import { TaskAssignedEvent } from '../events/task-assigned.event';
 import { TaskStatusChangedEvent } from '../events/task-status-changed.event';
 import { CommentCreatedEvent } from '../events/comment-created.event';
+import { TaskDeadlineUrgentEvent } from '../events/task-deadline-urgent.event';
 
 /**
  * Listens for domain events and creates notification records.
@@ -76,6 +77,23 @@ export class NotificationListener {
       recipient: event.assigneeId as any,
       type: NotificationType.STATUS_CHANGED,
       message: `New comment on task "${event.taskTitle}"`,
+      task: event.taskId as any,
+    });
+  }
+
+  /**
+   * Handles TaskDeadlineUrgentEvent → creates a "DeadlineUrgent" notification.
+   *
+   * FR-008.3: "The system shall automatically trigger an urgent deadline
+   * alert to the assignee when an incomplete task is within 24 hours of
+   * its due date."
+   */
+  @OnEvent('task.deadline-urgent')
+  async handleTaskDeadlineUrgent(event: TaskDeadlineUrgentEvent) {
+    await this.notificationsRepository.create({
+      recipient: event.assigneeId as any,
+      type: NotificationType.DEADLINE_URGENT,
+      message: `URGENT: Task "${event.taskTitle}" is due in ${event.hoursRemaining} hour(s)`,
       task: event.taskId as any,
     });
   }

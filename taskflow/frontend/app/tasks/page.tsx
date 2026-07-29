@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import api from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Task {
   _id: string; title: string; status: string; priority: string; dueDate: string;
@@ -10,20 +11,17 @@ interface Task {
   assignee?: { _id: string; firstName: string; lastName: string };
 }
 
-/**
- * Tasks list page — FR-005: Task Management
- *
- * Shows all tasks with filterable columns for status and priority.
- * Each row links to the task detail page for comments + status transitions.
- * SRS: FR-005.3 — personalized workspace view (filtered by assignee later).
- */
 export default function TasksPage() {
+  const { user } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [filter, setFilter] = useState('');
+  const [myTasksOnly, setMyTasksOnly] = useState(user?.role === 'TeamMember');
 
   useEffect(() => { api.get('/tasks').then((r) => setTasks(r.data)); }, []);
 
-  const filtered = filter ? tasks.filter((t) => t.status === filter) : tasks;
+  const filtered = tasks
+    .filter((t) => !filter || t.status === filter)
+    .filter((t) => !myTasksOnly || t.assignee?._id === user?._id);
 
   const statusColor = (s: string) =>
     s === 'Done' ? 'text-green-600' : s === 'In Progress' ? 'text-blue-600' : 'text-gray-500';
@@ -34,13 +32,19 @@ export default function TasksPage() {
     <div>
       <h1 className="text-2xl font-bold mb-4">Tasks</h1>
 
-      <div className="mb-4 flex gap-2">
-        {['', 'To Do', 'In Progress', 'Done'].map((s) => (
-          <button key={s} onClick={() => setFilter(s)}
-            className={`px-3 py-1 rounded text-sm border ${filter === s ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300'}`}>
-            {s || 'All'}
-          </button>
-        ))}
+      <div className="mb-4 flex items-center gap-3 flex-wrap">
+        <div className="flex gap-2">
+          {['', 'To Do', 'In Progress', 'Done'].map((s) => (
+            <button key={s} onClick={() => setFilter(s)}
+              className={`px-3 py-1 rounded text-sm border ${filter === s ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300'}`}>
+              {s || 'All'}
+            </button>
+          ))}
+        </div>
+        <label className="flex items-center gap-1.5 text-sm text-gray-600 cursor-pointer">
+          <input type="checkbox" checked={myTasksOnly} onChange={(e) => setMyTasksOnly(e.target.checked)} />
+          My tasks only
+        </label>
       </div>
 
       <div className="space-y-2">
