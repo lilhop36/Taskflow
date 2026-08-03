@@ -6,10 +6,10 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // CORS — allow the Next.js frontend (localhost:3001) to send cross-origin
+  // CORS — allow the Next.js frontend (localhost:3000) to send cross-origin
   // requests with credentials (cookies). Required for JWT HTTP-only cookie auth.
   app.enableCors({
-    origin: 'http://localhost:3001',
+    origin: 'http://localhost:3000',
     credentials: true,
   });
 

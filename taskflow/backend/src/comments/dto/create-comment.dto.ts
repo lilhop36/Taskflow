@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsMongoId, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 /**
  * DTO for creating a new comment on a task.
@@ -6,6 +6,9 @@ import { IsNotEmpty, IsString } from 'class-validator';
  * Only `content` is required because `task` and `author` are resolved
  * from the route parameter and authenticated user respectively.
  * (The task ID comes from the URL, the author from the JWT token.)
+ *
+ * `replyTo` is optional — when set, the comment is a reply to the
+ * referenced comment and is rendered nested under it in the thread.
  *
  * SRS: FR-007.1 — plain text comments
  * SRS: FR-007.2 — authorized users can post
@@ -18,4 +21,12 @@ export class CreateCommentDto {
   @IsNotEmpty({ message: 'Comment content is required' })
   @IsString({ message: 'Comment must be a string' })
   content: string;
+
+  /**
+   * Optional parent comment ID. When present, this comment is a reply
+   * to the referenced comment within the same task's thread.
+   */
+  @IsOptional()
+  @IsMongoId({ message: 'replyTo must be a valid Mongo ID' })
+  replyTo?: string;
 }

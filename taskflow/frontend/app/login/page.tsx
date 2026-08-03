@@ -3,6 +3,7 @@
 import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
+import { homeForRole } from '@/lib/nav';
 
 /**
  * Login page — FR-001: User Authentication
@@ -26,9 +27,7 @@ export default function LoginPage() {
     setSubmitting(true);
     try {
       const user = await login(email, password);
-      if (user.role === 'Administrator') router.push('/users');
-      else if (user.role === 'ProjectManager') router.push('/dashboard');
-      else router.push('/tasks');
+      router.push(homeForRole(user.role));
     } catch (err: any) {
       setError(err.response?.data?.message || 'Login failed. Check your credentials.');
     } finally {

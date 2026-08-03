@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { NotificationsRepository } from './notifications.repository';
 
 /**
@@ -23,11 +23,29 @@ export class NotificationsService {
   }
 
   /**
+   * Returns the user's full notification history (read + unread), newest
+   * first — used by the "history" view of the notification center.
+   */
+  async findByUser(userId: string) {
+    return this.notificationsRepository.findByUser(userId);
+  }
+
+  /**
    * Marks a single notification as read.
    * FR-008.4: "clear/dismiss individual notifications."
+   *
+   * Scoped to the current user: a notification that does not exist or
+   * belongs to another user yields a 404 (never reveals its existence).
    */
-  async markAsRead(id: string) {
-    return this.notificationsRepository.markAsRead(id);
+  async markAsRead(id: string, userId: string) {
+    const notification = await this.notificationsRepository.markAsRead(
+      id,
+      userId,
+    );
+    if (!notification) {
+      throw new NotFoundException('Notification not found');
+    }
+    return notification;
   }
 
   /**

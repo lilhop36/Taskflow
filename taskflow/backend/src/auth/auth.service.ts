@@ -68,6 +68,7 @@ export class AuthService {
       sub: user._id.toString(),
       email: user.email,
       role: user.role,
+      version: user.refreshTokenVersion ?? 0,
     };
 
     const accessToken = this.jwtService.sign(payload, {
@@ -82,19 +83,7 @@ export class AuthService {
 
     // Attach HTTP-Only Cookies if Response object is provided (XSS Defense)
     if (res) {
-      res.cookie('access_token', accessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 30 * 60 * 1000, // 30 minutes in milliseconds
-      });
-
-      res.cookie('refresh_token', refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
-      });
+      this.setAuthCookies(res, accessToken, refreshToken);
     }
 
     const userObject = user.toObject();
@@ -108,11 +97,17 @@ export class AuthService {
   }
 
   /**
-   * Re-issues a new Access Token using a valid Refresh Token.
+   * Re-issues new Access + Refresh tokens using a valid Refresh Token.
    *
-   * @param refreshToken Refresh token string
+   * Rotates AND revokes: the user's refresh-token version is incremented,
+   * so the presented token (and every earlier one) can never be used again.
+   * When a Response object is provided, the HTTP-only cookies are
+   * overwritten so the browser session continues without forcing re-login.
+   *
+   * @param refreshToken Current refresh token string
+   * @param res Optional Express response object to attach updated cookies
    */
-  async refreshAccessToken(refreshToken: string) {
+  async refreshAccessToken(refreshToken: string, res?: Response) {
     try {
       const payload = this.jwtService.verify<JwtPayload>(refreshToken, {
         secret: this.jwtConfiguration.refreshSecret,
@@ -123,21 +118,65 @@ export class AuthService {
         throw new UnauthorizedException('Invalid or expired refresh token');
       }
 
+      // Rotation check: only the latest refresh token is valid. Any token
+      // issued before the most recent rotation is rejected (revoked).
+      if (payload.version !== (user.refreshTokenVersion ?? 0)) {
+        throw new UnauthorizedException('Invalid or expired refresh token');
+      }
+
+      // Revoke the presented token before issuing a new pair, so a
+      // reused/stolen refresh token cannot extend the session.
+      await this.usersService.bumpRefreshTokenVersion(user._id.toString());
+
       const newPayload: JwtPayload = {
         sub: user._id.toString(),
         email: user.email,
         role: user.role,
+        version: (user.refreshTokenVersion ?? 0) + 1,
       };
 
-      const newAccessToken = this.jwtService.sign(newPayload, {
+      const accessToken = this.jwtService.sign(newPayload, {
         secret: this.jwtConfiguration.accessSecret,
         expiresIn: this.jwtConfiguration.accessExpiresIn as any,
       });
 
-      return { accessToken: newAccessToken };
+      const newRefreshToken = this.jwtService.sign(newPayload, {
+        secret: this.jwtConfiguration.refreshSecret,
+        expiresIn: this.jwtConfiguration.refreshExpiresIn as any,
+      });
+
+      if (res) {
+        this.setAuthCookies(res, accessToken, newRefreshToken);
+      }
+
+      return { accessToken, refreshToken: newRefreshToken };
     } catch {
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
+  }
+
+  /**
+   * Attaches the HTTP-only auth cookies to the response.
+   * Shared by login() and refreshAccessToken().
+   */
+  private setAuthCookies(
+    res: Response,
+    accessToken: string,
+    refreshToken: string,
+  ) {
+    res.cookie('access_token', accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 30 * 60 * 1000, // 30 minutes in milliseconds
+    });
+
+    res.cookie('refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
+    });
   }
 
   /**

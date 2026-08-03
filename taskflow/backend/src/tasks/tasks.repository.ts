@@ -58,16 +58,4 @@ export class TasksRepository {
       .exec();
   }
 
-  async findByProjectAndAssignee(
-    projectId: string,
-    userId: string,
-  ): Promise<TaskDocument[]> {
-    return this.taskModel
-      .find({
-        project: projectId as any,
-        assignee: userId as any,
-      })
-      .populate('assignee', '-passwordHash')
-      .exec();
-  }
 }

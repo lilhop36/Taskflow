@@ -64,13 +64,14 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async refresh(
     @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
     @Body('refreshToken') bodyToken?: string,
   ) {
     const token = req.cookies?.refresh_token || bodyToken;
     if (!token) {
       throw new UnauthorizedException('Refresh token is required');
     }
-    return this.authService.refreshAccessToken(token);
+    return this.authService.refreshAccessToken(token, res);
   }
 
   /**

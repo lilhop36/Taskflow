@@ -143,9 +143,13 @@ export class TasksService {
   async update(id: string, updateTaskDto: UpdateTaskDto) {
     await this.findById(id);
 
+    // FR-008.1: Track the previous assignee so we only notify on a real reassignment
+    let previousAssigneeId: string | undefined;
+
     if (updateTaskDto.assignee) {
       const task = await this.tasksRepository.findById(id);
       if (task) {
+        previousAssigneeId = task.assignee?.toString();
         const project = await this.projectsRepository.findById(
           task.project.toString(),
         );
@@ -195,6 +199,19 @@ export class TasksService {
       throw new NotFoundException(`Task with ID ${id} not found`);
     }
 
+    // FR-008.1: Notify the new assignee when a task is reassigned
+    if (
+      updateTaskDto.assignee &&
+      updateTaskDto.assignee !== previousAssigneeId
+    ) {
+      this.eventEmitter.emit('task.assigned', {
+        taskId: id,
+        assigneeId: updateTaskDto.assignee,
+        taskTitle: updated.title,
+        assignedBy: 'system',
+      });
+    }
+
     // FR-008.3: Re-check deadline urgency if due date changed
     if (updateTaskDto.dueDate) {
       this.maybeEmitDeadlineUrgent(
@@ -226,9 +243,13 @@ export class TasksService {
       );
     }
 
-    const updated = await this.tasksRepository.update(id, {
-      status: newStatus,
-    });
+    // FR-009.2: record the true completion time (updatedAt is unreliable —
+    // it changes on any edit, not just completion). Cleared when reopened.
+    const updateData: any = { status: newStatus };
+    updateData.completedAt =
+      newStatus === TaskStatus.DONE ? new Date() : null;
+
+    const updated = await this.tasksRepository.update(id, updateData);
     if (!updated) {
       throw new NotFoundException(`Task with ID ${id} not found`);
     }

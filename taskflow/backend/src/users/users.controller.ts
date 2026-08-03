@@ -9,6 +9,7 @@ import {
   Post,
 } from '@nestjs/common';
 import { Roles } from '../common/decorators/roles.decorator';
+import { ParseMongoIdPipe } from '../common/pipes/parse-mongo-id.pipe';
 import { UserRole } from './schemas/user.schema';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -38,22 +39,28 @@ export class UsersController {
   }
 
   /**
-   * FR-002: Retrieve all user accounts.
+   * FR-002: Retrieve all user accounts (read-only).
    * Exposes GET /api/users
+   *
+   * Class-level @Roles(ADMIN) covers create/update/deactivate; these two GETs
+   * are relaxed to ProjectManager so PMs can generate employee performance
+   * reports (FR-009.2) and assign tasks. Admins still pass via the hierarchy.
    */
   @Get()
+  @Roles(UserRole.PROJECT_MANAGER)
   @HttpCode(HttpStatus.OK)
   async findAll() {
     return this.usersService.findAll();
   }
 
   /**
-   * Retrieve a single user profile by ID.
+   * Retrieve a single user profile by ID (read-only).
    * Exposes GET /api/users/:id
    */
   @Get(':id')
+  @Roles(UserRole.PROJECT_MANAGER)
   @HttpCode(HttpStatus.OK)
-  async findOne(@Param('id') id: string) {
+  async findOne(@Param('id', ParseMongoIdPipe) id: string) {
     return this.usersService.findById(id);
   }
 
@@ -64,7 +71,7 @@ export class UsersController {
   @Patch(':id')
   @HttpCode(HttpStatus.OK)
   async update(
-    @Param('id') id: string,
+    @Param('id', ParseMongoIdPipe) id: string,
     @Body() updateUserDto: UpdateUserDto,
   ) {
     return this.usersService.update(id, updateUserDto);
@@ -76,7 +83,7 @@ export class UsersController {
    */
   @Patch(':id/deactivate')
   @HttpCode(HttpStatus.OK)
-  async deactivate(@Param('id') id: string) {
+  async deactivate(@Param('id', ParseMongoIdPipe) id: string) {
     return this.usersService.deactivate(id);
   }
 }

@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
 import { NotificationsController } from './notifications.controller';
 import { NotificationsRepository } from './notifications.repository';
 import { NotificationsService } from './notifications.service';
 import { NotificationListener } from './listeners/notification.listener';
+import { Notification, NotificationSchema } from './schemas/notification.schema';
 
 /**
  * Feature module for user notifications.
@@ -14,6 +16,11 @@ import { NotificationListener } from './listeners/notification.listener';
  * SRS: FR-008.1-4
  */
 @Module({
+  imports: [
+    MongooseModule.forFeature([
+      { name: Notification.name, schema: NotificationSchema },
+    ]),
+  ],
   controllers: [NotificationsController],
   providers: [
     NotificationsService,

@@ -1,5 +1,6 @@
 import { Controller, Get, Param } from '@nestjs/common';
 import { Roles } from '../common/decorators/roles.decorator';
+import { ParseMongoIdPipe } from '../common/pipes/parse-mongo-id.pipe';
 import { UserRole } from '../users/schemas/user.schema';
 import { ReportsService } from './reports.service';
 
@@ -22,7 +23,9 @@ export class ReportsController {
    * Returns completion %, task distribution, overdue tasks, time progress.
    */
   @Get('project/:projectId')
-  async getProjectReport(@Param('projectId') projectId: string) {
+  async getProjectReport(
+    @Param('projectId', ParseMongoIdPipe) projectId: string,
+  ) {
     return this.reportsService.getProjectReport(projectId);
   }
 
@@ -31,7 +34,7 @@ export class ReportsController {
    * Returns on-time completion rate, active workload, missed deadlines.
    */
   @Get('employee/:userId')
-  async getEmployeeReport(@Param('userId') userId: string) {
+  async getEmployeeReport(@Param('userId', ParseMongoIdPipe) userId: string) {
     return this.reportsService.getEmployeeReport(userId);
   }
 }

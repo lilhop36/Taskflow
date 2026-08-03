@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, Types } from 'mongoose';
+import { HydratedDocument, SchemaTypes, Types } from 'mongoose';
 
 export type ProjectDocument = HydratedDocument<Project>;
 
@@ -25,13 +25,13 @@ export class Project {
   @Prop({ required: true, enum: ProjectStatus, default: ProjectStatus.ACTIVE })
   status: ProjectStatus;
 
-  @Prop({ required: true, type: Types.ObjectId, ref: 'User' })
+  @Prop({ required: true, type: SchemaTypes.ObjectId, ref: 'User' })
   owner: Types.ObjectId;
 
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'User' }], default: [] })
+  @Prop({ type: [{ type: SchemaTypes.ObjectId, ref: 'User' }], default: [] })
   members: Types.ObjectId[];
 
-  @Prop({ type: [{ type: Types.ObjectId, ref: 'Team' }], default: [] })
+  @Prop({ type: [{ type: SchemaTypes.ObjectId, ref: 'Team' }], default: [] })
   teams: Types.ObjectId[];
 }
 

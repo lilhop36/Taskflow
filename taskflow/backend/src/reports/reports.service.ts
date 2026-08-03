@@ -124,15 +124,17 @@ export class ReportsService {
     const totalAssigned = tasks.length;
     const now = new Date();
 
+    // completedAt is set when the task transitions to Done (FR-009.2).
+    // Fall back to updatedAt only for legacy tasks created before the
+    // field existed — updatedAt otherwise changes on any edit.
+    const completionTime = (t: any) =>
+      t.completedAt || t.updatedAt || t.createdAt;
+
     const completedOnTime = tasks.filter(
-      (t) =>
-        t.status === TaskStatus.DONE &&
-        t.dueDate >= ((t as any).updatedAt || (t as any).createdAt),
+      (t) => t.status === TaskStatus.DONE && t.dueDate >= completionTime(t),
     );
     const completedLate = tasks.filter(
-      (t) =>
-        t.status === TaskStatus.DONE &&
-        t.dueDate < ((t as any).updatedAt || (t as any).createdAt),
+      (t) => t.status === TaskStatus.DONE && t.dueDate < completionTime(t),
     );
     const activeWorkload = tasks.filter(
       (t) => t.status !== TaskStatus.DONE && t.dueDate >= now,

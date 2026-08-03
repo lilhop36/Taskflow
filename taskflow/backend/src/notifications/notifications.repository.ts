@@ -58,17 +58,23 @@ export class NotificationsRepository {
   /**
    * Find a single notification by ID (used for ownership check before updating).
    */
-  async findById(id: string): Promise<NotificationDocument | null> {
-    return this.notificationModel.findById(id).exec();
-  }
-
   /**
    * Mark a single notification as read.
    * FR-008.4: "clear/dismiss individual notifications."
+   *
+   * Scoped by recipient so a user can only dismiss their own notifications
+   * (prevents IDOR via PATCH /notifications/:id/read).
    */
-  async markAsRead(id: string): Promise<NotificationDocument | null> {
+  async markAsRead(
+    id: string,
+    userId: string,
+  ): Promise<NotificationDocument | null> {
     return this.notificationModel
-      .findByIdAndUpdate(id, { read: true }, { new: true })
+      .findOneAndUpdate(
+        { _id: id, recipient: new Types.ObjectId(userId) },
+        { read: true },
+        { new: true },
+      )
       .exec();
   }
 

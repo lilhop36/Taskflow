@@ -127,6 +127,16 @@ export class UsersService {
     return updated;
   }
 
+  // NFR-005: Increment the refresh-token version, revoking all previously
+  // issued refresh tokens. Called by AuthService during rotation.
+  async bumpRefreshTokenVersion(id: string) {
+    const user = await this.usersRepository.bumpRefreshTokenVersion(id);
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+    return user;
+  }
+
   // FR-002.3: Deactivate a user account.
   // BR-004: this sets status to Inactive — it does NOT delete anything.
   // All tasks, comments, and audit records authored by this user are preserved.

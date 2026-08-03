@@ -76,4 +76,18 @@ export class UsersRepository {
       .select('-passwordHash')
       .exec();
   }
+
+  // Increments the user's refresh-token version, invalidating every
+  // previously issued refresh token (rotation/revocation, NFR-005).
+  // Called by AuthService during refresh-token rotation.
+  async bumpRefreshTokenVersion(id: string): Promise<UserDocument | null> {
+    return this.userModel
+      .findByIdAndUpdate(
+        id,
+        { $inc: { refreshTokenVersion: 1 } },
+        { new: true },
+      )
+      .select('-passwordHash')
+      .exec();
+  }
 }

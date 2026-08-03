@@ -53,6 +53,11 @@ export class User {
 
   @Prop({ required: true, enum: UserStatus, default: UserStatus.ACTIVE })
   status: UserStatus;
+
+  // Incremented on every refresh-token rotation so previously issued
+  // refresh tokens are rejected server-side (NFR-005 session management).
+  @Prop({ default: 0 })
+  refreshTokenVersion: number;
 }
 
 // SchemaFactory.createForClass() converts the decorated class into

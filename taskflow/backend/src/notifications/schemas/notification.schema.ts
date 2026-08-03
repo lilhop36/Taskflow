@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, Types } from 'mongoose';
+import { HydratedDocument, SchemaTypes, Types } from 'mongoose';
 
 export type NotificationDocument = HydratedDocument<Notification>;
 
@@ -10,11 +10,13 @@ export type NotificationDocument = HydratedDocument<Notification>;
  * - TASK_ASSIGNED: alert when a task is assigned to a user (FR-008.1)
  * - STATUS_CHANGED: alert when a task status changes (FR-008.2)
  * - DEADLINE_URGENT: alert when a task is within 24h of due date (FR-008.3)
+ * - COMMENT: alert when a new comment is posted on a task the user owns/assigns (FR-007)
  */
 export enum NotificationType {
   TASK_ASSIGNED = 'TaskAssigned',
   STATUS_CHANGED = 'StatusChanged',
   DEADLINE_URGENT = 'DeadlineUrgent',
+  COMMENT = 'Comment',
 }
 
 /**
@@ -28,7 +30,7 @@ export enum NotificationType {
  */
 @Schema({ timestamps: true })
 export class Notification {
-  @Prop({ required: true, type: Types.ObjectId, ref: 'User' })
+  @Prop({ required: true, type: SchemaTypes.ObjectId, ref: 'User' })
   recipient: Types.ObjectId;
 
   @Prop({ required: true, enum: NotificationType })
@@ -37,7 +39,7 @@ export class Notification {
   @Prop({ required: true, trim: true })
   message: string;
 
-  @Prop({ type: Types.ObjectId, ref: 'Task' })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Task' })
   task?: Types.ObjectId;
 
   @Prop({ default: false })

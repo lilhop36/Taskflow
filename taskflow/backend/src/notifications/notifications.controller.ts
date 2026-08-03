@@ -3,9 +3,11 @@ import {
   Get,
   Param,
   Patch,
+  Query,
 } from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { ParseMongoIdPipe } from '../common/pipes/parse-mongo-id.pipe';
 
 /**
  * Controller for notification endpoints.
@@ -22,21 +24,37 @@ export class NotificationsController {
   ) {}
 
   /**
-   * FR-008.4: View all unread notifications.
-   * GET /api/notifications
+   * FR-008.4: View notifications for the current user.
+   * GET /api/notifications?includeRead=true
+   *
+   * Default (no param) returns only unread — the notification center's
+   * inbox. `?includeRead=true` returns the full read + unread history so
+   * the UI can offer a history view of already-dismissed alerts.
    */
   @Get()
-  async findUnread(@CurrentUser('_id') userId: string) {
+  async find(
+    @CurrentUser('_id') userId: string,
+    @Query('includeRead') includeRead?: string,
+  ) {
+    if (includeRead === 'true' || includeRead === '1') {
+      return this.notificationsService.findByUser(userId);
+    }
     return this.notificationsService.findUnreadByUser(userId);
   }
 
   /**
    * FR-008.4: Mark a single notification as read.
    * PATCH /api/notifications/:id/read
+   *
+   * Scoped to the authenticated user (from the JWT) — a user can only
+   * dismiss their own notifications.
    */
   @Patch(':id/read')
-  async markAsRead(@Param('id') id: string) {
-    return this.notificationsService.markAsRead(id);
+  async markAsRead(
+    @Param('id', ParseMongoIdPipe) id: string,
+    @CurrentUser('_id') userId: string,
+  ) {
+    return this.notificationsService.markAsRead(id, userId);
   }
 
   /**

@@ -7,6 +7,13 @@ import { UserRole, UserStatus } from '../users/schemas/user.schema';
 import * as bcrypt from 'bcrypt';
 import jwtConfig from '../config/jwt.config';
 
+// bcrypt v5+ exposes non-configurable properties — jest.spyOn(bcrypt, …)
+// throws "Cannot redefine property". Mock the module instead.
+jest.mock('bcrypt', () => ({
+  compare: jest.fn(),
+  hash: jest.fn(),
+}));
+
 /**
  * Unit Tests — AuthService
  *
@@ -25,12 +32,13 @@ describe('AuthService', () => {
     _id: { toString: () => 'user-id-123' },
     email: 'jane@example.com',
     passwordHash: 'hashed-password',
-    role: UserRole.EMPLOYEE,
+    role: UserRole.TEAM_MEMBER,
     status: UserStatus.ACTIVE,
+    refreshTokenVersion: 0,
     toObject: () => ({
       _id: 'user-id-123',
       email: 'jane@example.com',
-      role: UserRole.EMPLOYEE,
+      role: UserRole.TEAM_MEMBER,
       status: UserStatus.ACTIVE,
       passwordHash: 'hashed-password',
     }),
@@ -45,6 +53,7 @@ describe('AuthService', () => {
           useValue: {
             findByEmailWithPassword: jest.fn(),
             findById: jest.fn(),
+            bumpRefreshTokenVersion: jest.fn(),
           },
         },
         {
@@ -81,7 +90,7 @@ describe('AuthService', () => {
 
     it('should return user when credentials are valid (FR-001.1)', async () => {
       usersService.findByEmailWithPassword.mockResolvedValue(mockUser);
-      jest.spyOn(bcrypt, 'compare').mockResolvedValue(true as never);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
 
       const result = await service.validateUser(loginDto);
 
@@ -107,7 +116,7 @@ describe('AuthService', () => {
 
     it('should throw UnauthorizedException when password is wrong (FR-001.1)', async () => {
       usersService.findByEmailWithPassword.mockResolvedValue(mockUser);
-      jest.spyOn(bcrypt, 'compare').mockResolvedValue(false as never);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
       await expect(service.validateUser(loginDto)).rejects.toThrow(
         UnauthorizedException,
@@ -126,7 +135,7 @@ describe('AuthService', () => {
       }
 
       usersService.findByEmailWithPassword.mockResolvedValue(mockUser);
-      jest.spyOn(bcrypt, 'compare').mockResolvedValue(false as never);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(false);
       let passwordError: UnauthorizedException;
       try {
         await service.validateUser(loginDto);
@@ -156,6 +165,92 @@ describe('AuthService', () => {
       await service.login(mockUser);
 
       expect(jwtService.sign).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  // ─── refreshAccessToken() ─────────────────────────────────────────────────
+
+  describe('refreshAccessToken()', () => {
+    const res = {
+      cookie: jest.fn(),
+    };
+
+    beforeEach(() => {
+      jwtService.verify.mockReturnValue({
+        sub: 'user-id-123',
+        version: 0,
+      } as any);
+      usersService.findById.mockResolvedValue(mockUser);
+      usersService.bumpRefreshTokenVersion.mockResolvedValue(mockUser as any);
+    });
+
+    it('should rotate tokens and revoke the old refresh token (NFR-005)', async () => {
+      const result = await service.refreshAccessToken('old-refresh-token');
+
+      expect(jwtService.verify).toHaveBeenCalledWith(
+        'old-refresh-token',
+        expect.objectContaining({ secret: 'test-refresh-secret' }),
+      );
+      // The presented token is revoked (version bumped) before new tokens are issued
+      expect(usersService.bumpRefreshTokenVersion).toHaveBeenCalledWith(
+        'user-id-123',
+      );
+      // One sign for the new access token, one for the rotated refresh token
+      expect(jwtService.sign).toHaveBeenCalledTimes(2);
+      expect(result).toEqual({
+        accessToken: 'mock-jwt-token',
+        refreshToken: 'mock-jwt-token',
+      });
+    });
+
+    it('should set both cookies when a response object is provided (session refresh)', async () => {
+      await service.refreshAccessToken('old-refresh-token', res as any);
+
+      expect(res.cookie).toHaveBeenCalledWith(
+        'access_token',
+        'mock-jwt-token',
+        expect.any(Object),
+      );
+      expect(res.cookie).toHaveBeenCalledWith(
+        'refresh_token',
+        'mock-jwt-token',
+        expect.any(Object),
+      );
+    });
+
+    it('should reject a stale (already-rotated) refresh token', async () => {
+      // The DB version moved to 1 after a previous rotation, but the token
+      // still carries version 0 → it was revoked and must be rejected.
+      usersService.findById.mockResolvedValue({
+        ...mockUser,
+        refreshTokenVersion: 1,
+      });
+
+      await expect(service.refreshAccessToken('old-refresh-token')).rejects.toThrow(
+        UnauthorizedException,
+      );
+      expect(usersService.bumpRefreshTokenVersion).not.toHaveBeenCalled();
+    });
+
+    it('should throw UnauthorizedException for an invalid or expired refresh token', async () => {
+      jwtService.verify.mockImplementation(() => {
+        throw new Error('jwt expired');
+      });
+
+      await expect(service.refreshAccessToken('bad-token')).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('should throw UnauthorizedException when the user was deactivated (BR-004)', async () => {
+      usersService.findById.mockResolvedValue({
+        ...mockUser,
+        status: UserStatus.INACTIVE,
+      });
+
+      await expect(service.refreshAccessToken('token')).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
   });
 });

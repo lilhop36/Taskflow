@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useState } from 'react';
 import api from '@/lib/api';
+import { roleColor, userStatusBadge, errorMessage } from '@/lib/ui';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface User {
@@ -19,8 +20,20 @@ export default function UsersPage() {
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('TeamMember');
   const [error, setError] = useState('');
+  // Inline edit state
+  const [editingId, setEditingId] = useState('');
+  const [editFirstName, setEditFirstName] = useState('');
+  const [editLastName, setEditLastName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editRole, setEditRole] = useState('TeamMember');
+  const [savingEdit, setSavingEdit] = useState(false);
 
-  const load = () => api.get('/users').then((r) => setUsers(r.data));
+  const load = () => {
+    setError('');
+    api.get('/users')
+      .then((r) => setUsers(r.data))
+      .catch(() => setError('Unable to load users.'));
+  };
   useEffect(() => { load(); }, []);
 
   const isAdmin = user?.role === 'Administrator';
@@ -43,12 +56,40 @@ export default function UsersPage() {
       await api.patch(`/users/${id}/deactivate`);
       load();
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to deactivate user');
+      setError(errorMessage(err, 'Failed to deactivate user'));
     }
   };
 
-  const roleColor = (r: string) =>
-    r === 'Administrator' ? 'text-purple-600' : r === 'ProjectManager' ? 'text-blue-600' : 'text-gray-600';
+  // FR-002.2: inline edit of a user's profile (name, email, role) — Admin only,
+  // backed by PATCH /users/:id. The backend re-validates role enum + BR-007 email
+  // uniqueness and rejects any change with a clear message.
+  const startEdit = (u: User) => {
+    setEditingId(u._id);
+    setEditFirstName(u.firstName);
+    setEditLastName(u.lastName);
+    setEditEmail(u.email);
+    setEditRole(u.role);
+    setError('');
+  };
+
+  const saveEdit = async () => {
+    if (!editFirstName.trim() || !editLastName.trim()) return;
+    setSavingEdit(true);
+    setError('');
+    try {
+      await api.patch(`/users/${editingId}`, {
+        firstName: editFirstName,
+        lastName: editLastName,
+        email: editEmail,
+        role: editRole,
+      });
+      setEditingId('');
+      load();
+    } catch (err: any) {
+      setError(errorMessage(err, 'Failed to update user'));
+    }
+    setSavingEdit(false);
+  };
 
   return (
     <div>
@@ -114,27 +155,94 @@ export default function UsersPage() {
             </tr>
           </thead>
           <tbody className="divide-y">
-            {users.map((u) => (
-              <tr key={u._id} className="hover:bg-gray-50">
-                <td className="px-4 py-3">{u.firstName} {u.lastName}</td>
-                <td className="px-4 py-3 text-gray-500">{u.email}</td>
-                <td className={`px-4 py-3 font-medium ${roleColor(u.role)}`}>{u.role}</td>
-                <td className="px-4 py-3">
-                  <span className={`px-2 py-0.5 rounded-full text-xs ${u.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                    {u.status}
-                  </span>
-                </td>
-                {isAdmin && (
-                  <td className="px-4 py-3">
-                    {u.status === 'Active' && u._id !== user?._id && (
-                      <button onClick={() => handleDeactivate(u._id)} className="text-red-600 hover:text-red-800 text-xs font-medium">
-                        Deactivate
+            {users.map((u) =>
+              editingId === u._id ? (
+                // Inline edit row — replaces the user's row while editing
+                <tr key={u._id} className="bg-blue-50/50">
+                  <td colSpan={isAdmin ? 5 : 4} className="px-4 py-3">
+                    <div className="flex flex-wrap items-end gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">First</label>
+                        <input
+                          value={editFirstName}
+                          onChange={(e) => setEditFirstName(e.target.value)}
+                          className="border rounded px-2 py-1.5 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Last</label>
+                        <input
+                          value={editLastName}
+                          onChange={(e) => setEditLastName(e.target.value)}
+                          className="border rounded px-2 py-1.5 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Email</label>
+                        <input
+                          type="email"
+                          value={editEmail}
+                          onChange={(e) => setEditEmail(e.target.value)}
+                          className="border rounded px-2 py-1.5 text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Role</label>
+                        <select
+                          value={editRole}
+                          onChange={(e) => setEditRole(e.target.value)}
+                          className="border rounded px-2 py-1.5 text-sm"
+                        >
+                          <option value="TeamMember">Team Member</option>
+                          <option value="ProjectManager">Project Manager</option>
+                          <option value="Administrator">Administrator</option>
+                        </select>
+                      </div>
+                      <button
+                        onClick={saveEdit}
+                        disabled={savingEdit}
+                        className="px-3 py-1.5 rounded text-xs bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
+                      >
+                        {savingEdit ? 'Saving…' : 'Save'}
                       </button>
-                    )}
+                      <button
+                        onClick={() => setEditingId('')}
+                        className="px-3 py-1.5 rounded text-xs bg-gray-200 text-gray-700 hover:bg-gray-300"
+                      >
+                        Cancel
+                      </button>
+                    </div>
                   </td>
-                )}
-              </tr>
-            ))}
+                </tr>
+              ) : (
+                <tr key={u._id} className="hover:bg-gray-50">
+                  <td className="px-4 py-3">{u.firstName} {u.lastName}</td>
+                  <td className="px-4 py-3 text-gray-500">{u.email}</td>
+                  <td className={`px-4 py-3 font-medium ${roleColor(u.role)}`}>{u.role}</td>
+                  <td className="px-4 py-3">
+                    <span className={`px-2 py-0.5 rounded-full text-xs ${userStatusBadge(u.status)}`}>
+                      {u.status}
+                    </span>
+                  </td>
+                  {isAdmin && (
+                    <td className="px-4 py-3">
+                      <div className="flex gap-3">
+                        {u.status === 'Active' && (
+                          <button onClick={() => startEdit(u)} className="text-blue-600 hover:text-blue-800 text-xs font-medium">
+                            Edit
+                          </button>
+                        )}
+                        {u.status === 'Active' && u._id !== user?._id && (
+                          <button onClick={() => handleDeactivate(u._id)} className="text-red-600 hover:text-red-800 text-xs font-medium">
+                            Deactivate
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  )}
+                </tr>
+              ),
+            )}
           </tbody>
         </table>
       </div>

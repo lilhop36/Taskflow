@@ -70,14 +70,22 @@ export class ProjectsRepository {
   async isUserMemberOfProject(userId: string, projectId: string): Promise<boolean> {
     const project = await this.projectModel
       .findById(projectId)
-      .select('members')
+      .select('owner members')
       .exec();
 
     if (!project) {
       return false;
     }
 
+    const userObjectId = new Types.ObjectId(userId);
+
+    // BR-008: the project owner is always a member — they must be able
+    // to comment on tasks even if they are not listed in `members`.
+    if (project.owner && project.owner.equals(userObjectId)) {
+      return true;
+    }
+
     // Check if userId exists in the members array
-    return project.members.some(memberId => memberId.equals(new Types.ObjectId(userId)));
+    return project.members.some(memberId => memberId.equals(userObjectId));
   }
 }

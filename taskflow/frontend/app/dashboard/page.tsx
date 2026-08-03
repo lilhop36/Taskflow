@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { formatDate } from '@/lib/utils';
 
 interface Project {
   _id: string;
@@ -14,10 +15,21 @@ interface Project {
 
 interface Task {
   _id: string;
+  title: string;
   status: string;
   project: string;
   dueDate: string;
 }
+
+/**
+ * Bar colors for the status distribution chart (FR-006.2).
+ * To Do = gray, In Progress = amber, Done = green.
+ */
+const BAR_COLORS: Record<string, string> = {
+  'To Do': '#6b7280',      // Gray
+  'In Progress': '#eab308', // Yellow/Amber
+  'Done': '#22c55e',        // Green
+};
 
 /**
  * Dashboard page — FR-006: Progress Visualization
@@ -54,9 +66,9 @@ export default function DashboardPage() {
   const overdue = projectTasks.filter((t) => t.status !== 'Done' && new Date(t.dueDate) < now);
 
   const chartData = [
-    { name: 'To Do', count: todo },
-    { name: 'In Progress', count: inProgress },
-    { name: 'Done', count: done },
+    { name: 'To Do', count: todo, fill: BAR_COLORS['To Do'] },
+    { name: 'In Progress', count: inProgress, fill: BAR_COLORS['In Progress'] },
+    { name: 'Done', count: done, fill: BAR_COLORS['Done'] },
   ];
 
   return (
@@ -100,13 +112,17 @@ export default function DashboardPage() {
 
       {/* Bar chart */}
       <div className="bg-white rounded-lg shadow p-4 mb-8">
-        <h2 className="text-sm font-semibold mb-3">Task Status Distribution (FR-006.2)</h2>
+        <h2 className="text-sm font-semibold mb-3">Task Status Distribution</h2>
         <ResponsiveContainer width="100%" height={250}>
           <BarChart data={chartData}>
             <XAxis dataKey="name" />
             <YAxis allowDecimals={false} />
             <Tooltip />
-            <Bar dataKey="count" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+              {chartData.map((entry) => (
+                <Cell key={entry.name} fill={entry.fill} />
+              ))}
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -115,12 +131,12 @@ export default function DashboardPage() {
       {overdue.length > 0 && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
           <h2 className="text-sm font-semibold text-red-800 mb-2">
-            Overdue Tasks (FR-006.3)
+            Overdue Tasks
           </h2>
           <ul className="text-sm text-red-700 space-y-1">
             {overdue.slice(0, 10).map((t) => (
               <li key={t._id}>
-                • {t.title} — due {new Date(t.dueDate).toLocaleDateString()}
+                • {t.title} — due {formatDate(t.dueDate)}
               </li>
             ))}
           </ul>

@@ -1,4 +1,5 @@
 import {
+  IsArray,
   IsDateString,
   IsMongoId,
   IsNotEmpty,
@@ -24,12 +25,16 @@ export class CreateProjectDto {
   endDate: string;
 
   @IsNotEmpty({ message: 'Project owner is required' })
-  @IsString({ message: 'Owner must be a valid user ID' })
+  @IsMongoId({ message: 'Owner must be a valid Mongo ID' })
   owner: string;
 
   @IsOptional()
-  members: string[];
+  @IsArray({ message: 'Members must be an array' })
+  @IsMongoId({ each: true, message: 'Each member must be a valid Mongo ID' })
+  members?: string[];
 
   @IsOptional()
-  teams: string[];
+  @IsArray({ message: 'Teams must be an array' })
+  @IsMongoId({ each: true, message: 'Each team must be a valid Mongo ID' })
+  teams?: string[];
 }

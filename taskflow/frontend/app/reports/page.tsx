@@ -21,8 +21,10 @@ export default function ReportsPage() {
   const [report, setReport] = useState<any>(null);
 
   useEffect(() => {
-    api.get('/projects').then((r) => setProjects(r.data));
-    api.get('/users').then((r) => setUsers(r.data));
+    api.get('/projects').then((r) => setProjects(r.data)).catch(() => {});
+    // A 403 here (e.g. non-PM visiting directly) must not spam the console;
+    // the employee dropdown simply stays empty.
+    api.get('/users').then((r) => setUsers(r.data)).catch(() => {});
   }, []);
 
   const fetchProjectReport = async () => {

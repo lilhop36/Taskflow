@@ -11,22 +11,28 @@ describe('CommentsService', () => {
   let tasksRepository: jest.Mocked<TasksRepository>;
   let eventEmitter: { emit: jest.Mock };
 
+  // Valid ObjectId hex strings — the service casts taskId/authorId via
+  // new Types.ObjectId(), so fake IDs like 'task-id-123' throw BSONError.
+  const TASK_ID = '507f1f77bcf86cd799439011';
+  const AUTHOR_ID = '507f1f77bcf86cd799439015';
+  const ASSIGNEE_ID = '507f1f77bcf86cd799439016';
+
   const mockTask = {
-    _id: { toString: () => 'task-id-123' },
+    _id: { toString: () => TASK_ID },
     title: 'Sample Task',
-    assignee: { toString: () => 'assignee-id' },
+    assignee: { toString: () => ASSIGNEE_ID },
   } as any;
 
   const mockComment = {
     _id: { toString: () => 'comment-id-1' },
     content: 'Hello task',
-    task: 'task-id-123',
-    author: 'author-id',
+    task: TASK_ID,
+    author: AUTHOR_ID,
     toObject: () => ({
       _id: 'comment-id-1',
       content: 'Hello task',
-      task: 'task-id-123',
-      author: 'author-id',
+      task: TASK_ID,
+      author: AUTHOR_ID,
     }),
   } as any;
 
@@ -40,7 +46,7 @@ describe('CommentsService', () => {
           provide: CommentsRepository,
           useValue: {
             create: jest.fn(),
-            findByTask: jest.fn(),
+            findByTaskWithFilter: jest.fn(),
           },
         },
         {
@@ -67,17 +73,17 @@ describe('CommentsService', () => {
 
       const result = await service.create(
         { content: 'Hello task' } as any,
-        'task-id-123',
-        'author-id',
+        TASK_ID,
+        AUTHOR_ID,
       );
 
       expect(commentsRepository.create).toHaveBeenCalled();
       expect(eventEmitter.emit).toHaveBeenCalledWith(
         'comment.created',
         expect.objectContaining({
-          taskId: 'task-id-123',
-          authorId: 'author-id',
-          assigneeId: 'assignee-id',
+          taskId: TASK_ID,
+          authorId: AUTHOR_ID,
+          assigneeId: ASSIGNEE_ID,
         }),
       );
       expect(result.content).toBe('Hello task');
@@ -87,7 +93,7 @@ describe('CommentsService', () => {
       tasksRepository.findById.mockResolvedValue(null);
 
       await expect(
-        service.create({ content: 'x' } as any, 'missing', 'author-id'),
+        service.create({ content: 'x' } as any, '507f1f77bcf86cd799439019', AUTHOR_ID),
       ).rejects.toThrow(NotFoundException);
       expect(commentsRepository.create).not.toHaveBeenCalled();
     });
@@ -95,15 +101,17 @@ describe('CommentsService', () => {
 
   describe('findByTask() — FR-007.1', () => {
     it('should return comments for a task', async () => {
-      commentsRepository.findByTask.mockResolvedValue([mockComment]);
-      const result = await service.findByTask('task-id-123');
+      commentsRepository.findByTaskWithFilter.mockResolvedValue([mockComment]);
+      const result = await service.findByTask(TASK_ID);
       expect(result).toHaveLength(1);
-      expect(commentsRepository.findByTask).toHaveBeenCalledWith('task-id-123');
+      expect(commentsRepository.findByTaskWithFilter).toHaveBeenCalledWith(
+        expect.objectContaining({ task: expect.anything() }),
+      );
     });
 
     it('should return empty array when task has no comments', async () => {
-      commentsRepository.findByTask.mockResolvedValue([]);
-      const result = await service.findByTask('task-id-123');
+      commentsRepository.findByTaskWithFilter.mockResolvedValue([]);
+      const result = await service.findByTask(TASK_ID);
       expect(result).toEqual([]);
     });
   });

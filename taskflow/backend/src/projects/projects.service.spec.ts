@@ -2,6 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { ProjectsService } from './projects.service';
 import { ProjectsRepository } from './projects.repository';
+import { UsersService } from '../users/users.service';
+import { UserRole } from '../users/schemas/user.schema';
 import { ProjectStatus } from './schemas/project.schema';
 
 /**
@@ -12,6 +14,7 @@ import { ProjectStatus } from './schemas/project.schema';
 describe('ProjectsService', () => {
   let service: ProjectsService;
   let repository: jest.Mocked<ProjectsRepository>;
+  let usersService: jest.Mocked<UsersService>;
 
   const mockProject = {
     _id: { toString: () => 'project-id-123' },
@@ -26,7 +29,19 @@ describe('ProjectsService', () => {
       _id: 'project-id-123',
       name: 'TaskFlow MVP',
       status: ProjectStatus.ACTIVE,
+      // Included so update() can fall back to the untouched date bound.
+      startDate: new Date('2024-01-01'),
+      endDate: new Date('2024-12-31'),
     }),
+  } as any;
+
+  const mockProjectManager = {
+    _id: { toString: () => 'owner-id' },
+    firstName: 'Jane',
+    lastName: 'Doe',
+    email: 'jane@example.com',
+    role: UserRole.PROJECT_MANAGER,
+    status: 'Active',
   } as any;
 
   beforeEach(async () => {
@@ -44,11 +59,18 @@ describe('ProjectsService', () => {
             countActiveTasks: jest.fn(),
           },
         },
+        {
+          provide: UsersService,
+          useValue: {
+            findById: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
     service = module.get<ProjectsService>(ProjectsService);
     repository = module.get(ProjectsRepository);
+    usersService = module.get(UsersService);
   });
 
   afterEach(() => jest.clearAllMocks());
@@ -128,20 +150,22 @@ describe('ProjectsService', () => {
   // ─── create() ─────────────────────────────────────────────────────────────
 
   describe('create()', () => {
+    const validDto = {
+      name: 'TaskFlow MVP',
+      description: 'Main project',
+      startDate: '2024-01-01',
+      endDate: '2024-12-31',
+      owner: 'owner-id',
+      members: [],
+    };
+
     it('should create project with coerced date strings (FR-003.1)', async () => {
       repository.create.mockResolvedValue(mockProject);
+      usersService.findById.mockResolvedValue(mockProjectManager);
 
-      const dto = {
-        name: 'TaskFlow MVP',
-        description: 'Main project',
-        startDate: '2024-01-01',
-        endDate: '2024-12-31',
-        owner: 'owner-id',
-        members: [],
-      };
+      const result = await service.create(validDto);
 
-      const result = await service.create(dto);
-
+      expect(usersService.findById).toHaveBeenCalledWith('owner-id');
       expect(repository.create).toHaveBeenCalledWith(
         expect.objectContaining({
           // Dates must be converted to Date objects, not left as strings
@@ -150,6 +174,72 @@ describe('ProjectsService', () => {
         }),
       );
       expect(result).toBeDefined();
+    });
+
+    it('should throw BadRequestException when endDate is before startDate (BR-006)', async () => {
+      await expect(
+        service.create({ ...validDto, startDate: '2024-12-31', endDate: '2024-01-01' }),
+      ).rejects.toThrow(BadRequestException);
+      expect(repository.create).not.toHaveBeenCalled();
+    });
+
+    it('should throw NotFoundException when the owner does not exist (BR-008)', async () => {
+      usersService.findById.mockResolvedValue(null);
+
+      await expect(service.create(validDto)).rejects.toThrow(NotFoundException);
+      expect(repository.create).not.toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException when the owner is not a Project Manager (BR-008)', async () => {
+      usersService.findById.mockResolvedValue({
+        ...mockProjectManager,
+        role: UserRole.TEAM_MEMBER,
+      });
+
+      await expect(service.create(validDto)).rejects.toThrow(BadRequestException);
+      expect(repository.create).not.toHaveBeenCalled();
+    });
+  });
+
+  // ─── update() ─────────────────────────────────────────────────────────────
+
+  describe('update()', () => {
+    it('should throw BadRequestException when the new dates invert the range (BR-006)', async () => {
+      repository.findById.mockResolvedValue(mockProject);
+
+      await expect(
+        service.update('project-id-123', {
+          startDate: '2024-06-01',
+          endDate: '2024-05-01',
+        }),
+      ).rejects.toThrow(BadRequestException);
+      expect(repository.update).not.toHaveBeenCalled();
+    });
+
+    it('should allow updating only one bound while keeping the range valid', async () => {
+      repository.findById.mockResolvedValue(mockProject);
+      repository.update.mockResolvedValue(mockProject);
+
+      // Existing range is 2024-01-01 → 2024-12-31; extending only the end is fine.
+      await expect(
+        service.update('project-id-123', { endDate: '2025-06-01' }),
+      ).resolves.toBeDefined();
+      expect(repository.update).toHaveBeenCalled();
+    });
+
+    it('should not accept a status field (archiving only via the archive endpoint)', async () => {
+      repository.findById.mockResolvedValue(mockProject);
+      repository.update.mockResolvedValue(mockProject);
+
+      await service.update('project-id-123', {
+        status: ProjectStatus.ARCHIVED,
+      } as any);
+
+      // The DTO has no status property, so the service must not persist it.
+      expect(repository.update).toHaveBeenCalledWith(
+        'project-id-123',
+        expect.not.objectContaining({ status: ProjectStatus.ARCHIVED }),
+      );
     });
   });
 });

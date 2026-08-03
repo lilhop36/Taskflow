@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import * as Joi from 'joi';
 import { EventEmitterModule } from '@nestjs/event-emitter';
@@ -7,7 +7,6 @@ import { AuthModule } from './auth/auth.module';
 import { CommentsModule } from './comments/comments.module';
 import jwtConfig from './config/jwt.config';
 import { DatabaseModule } from './database/database.module';
-import { DatabaseModelsModule } from './database/models/database-models.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { ProjectsModule } from './projects/projects.module';
 import { ReportsModule } from './reports/reports.module';
@@ -17,6 +16,7 @@ import { UsersModule } from './users/users.module';
 import { HealthModule } from './health/health.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
 @Module({
   imports: [
@@ -45,10 +45,6 @@ import { RolesGuard } from './common/guards/roles.guard';
     // DatabaseModule establishes the MongoDB connection.
     // It must be imported after ConfigModule so ConfigService is available.
     DatabaseModule,
-
-    // DatabaseModelsModule registers all Mongoose schemas globally.
-    // Any module can inject any model without importing the originating feature module.
-    DatabaseModelsModule,
 
     // UsersModule encapsulates User schema, repository, service, and controller.
     UsersModule,
@@ -101,6 +97,12 @@ import { RolesGuard } from './common/guards/roles.guard';
     {
       provide: APP_GUARD,
       useClass: RolesGuard,
+    },
+    // Global exception filter — maps Mongoose CastError/ValidationError and
+    // BSONError to clean 400 responses instead of raw 500s.
+    {
+      provide: APP_FILTER,
+      useClass: AllExceptionsFilter,
     },
   ],
 })

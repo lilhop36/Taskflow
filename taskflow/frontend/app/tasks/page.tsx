@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import api from '@/lib/api';
+import { formatDate } from '@/lib/utils';
+import { statusColor, priorityColor, canManage } from '@/lib/ui';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface Task {
@@ -23,14 +25,18 @@ export default function TasksPage() {
     .filter((t) => !filter || t.status === filter)
     .filter((t) => !myTasksOnly || t.assignee?._id === user?._id);
 
-  const statusColor = (s: string) =>
-    s === 'Done' ? 'text-green-600' : s === 'In Progress' ? 'text-blue-600' : 'text-gray-500';
-  const priorityColor = (p: string) =>
-    p === 'High' ? 'text-red-600' : p === 'Medium' ? 'text-yellow-600' : 'text-gray-500';
+  const isPM = canManage(user?.role);
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-4">Tasks</h1>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-2xl font-bold">Tasks</h1>
+        {isPM && (
+          <Link href="/tasks/new" className="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">
+            + New Task
+          </Link>
+        )}
+      </div>
 
       <div className="mb-4 flex items-center gap-3 flex-wrap">
         <div className="flex gap-2">
@@ -60,7 +66,7 @@ export default function TasksPage() {
             <div className="flex items-center gap-3 text-xs">
               <span className={priorityColor(t.priority)}>{t.priority}</span>
               <span className={statusColor(t.status)}>{t.status}</span>
-              <span className="text-gray-400">{new Date(t.dueDate).toLocaleDateString()}</span>
+              <span className="text-gray-400">{formatDate(t.dueDate)}</span>
             </div>
           </Link>
         ))}

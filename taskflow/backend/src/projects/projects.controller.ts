@@ -9,6 +9,7 @@ import {
   Post,
 } from '@nestjs/common';
 import { Roles } from '../common/decorators/roles.decorator';
+import { ParseMongoIdPipe } from '../common/pipes/parse-mongo-id.pipe';
 import { UserRole } from '../users/schemas/user.schema';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
@@ -26,21 +27,23 @@ export class ProjectsController {
   }
 
   @Get()
+  @Roles(UserRole.TEAM_MEMBER)
   @HttpCode(HttpStatus.OK)
   async findAll() {
     return this.projectsService.findAll();
   }
 
   @Get(':id')
+  @Roles(UserRole.TEAM_MEMBER)
   @HttpCode(HttpStatus.OK)
-  async findOne(@Param('id') id: string) {
+  async findOne(@Param('id', ParseMongoIdPipe) id: string) {
     return this.projectsService.findById(id);
   }
 
   @Patch(':id')
   @HttpCode(HttpStatus.OK)
   async update(
-    @Param('id') id: string,
+    @Param('id', ParseMongoIdPipe) id: string,
     @Body() updateProjectDto: UpdateProjectDto,
   ) {
     return this.projectsService.update(id, updateProjectDto);
@@ -48,7 +51,7 @@ export class ProjectsController {
 
   @Patch(':id/archive')
   @HttpCode(HttpStatus.OK)
-  async archive(@Param('id') id: string) {
+  async archive(@Param('id', ParseMongoIdPipe) id: string) {
     return this.projectsService.archive(id);
   }
 }

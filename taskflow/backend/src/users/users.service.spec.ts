@@ -9,6 +9,13 @@ import { UsersRepository } from './users.repository';
 import { UserStatus, UserRole } from './schemas/user.schema';
 import * as bcrypt from 'bcrypt';
 
+// bcrypt v5+ exposes non-configurable properties — jest.spyOn(bcrypt, …)
+// throws "Cannot redefine property". Mock the module instead.
+jest.mock('bcrypt', () => ({
+  compare: jest.fn(),
+  hash: jest.fn().mockResolvedValue('hashed-password'),
+}));
+
 /**
  * Unit Tests — UsersService
  *
@@ -31,7 +38,7 @@ describe('UsersService', () => {
     lastName: 'Doe',
     email: 'jane@example.com',
     passwordHash: 'hashed-password',
-    role: UserRole.EMPLOYEE,
+    role: UserRole.TEAM_MEMBER,
     status: UserStatus.ACTIVE,
     toObject: () => ({
       _id: 'user-id-123',
@@ -39,7 +46,7 @@ describe('UsersService', () => {
       lastName: 'Doe',
       email: 'jane@example.com',
       passwordHash: 'hashed-password',
-      role: UserRole.EMPLOYEE,
+      role: UserRole.TEAM_MEMBER,
       status: UserStatus.ACTIVE,
     }),
   } as any;
@@ -81,7 +88,7 @@ describe('UsersService', () => {
       lastName: 'Doe',
       email: 'jane@example.com',
       password: 'StrongPass123!',
-      role: UserRole.EMPLOYEE,
+      role: UserRole.TEAM_MEMBER,
     };
 
     it('should hash the password and create the user (FR-002.1, NFR-007)', async () => {
@@ -133,13 +140,12 @@ describe('UsersService', () => {
       // Arrange
       repository.findByEmail.mockResolvedValue(null);
       repository.create.mockResolvedValue(mockUser);
-      const hashSpy = jest.spyOn(bcrypt, 'hash');
 
       // Act
       await service.create(createDto);
 
       // Assert: bcrypt.hash was called with the plain password and >= 10 rounds
-      const [, saltRounds] = hashSpy.mock.calls[0];
+      const [, saltRounds] = (bcrypt.hash as jest.Mock).mock.calls[0];
       expect(typeof saltRounds === 'number' ? saltRounds : 0).toBeGreaterThanOrEqual(10);
     });
   });

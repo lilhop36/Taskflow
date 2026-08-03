@@ -1,6 +1,7 @@
 import {
   IsDateString,
   IsEnum,
+  IsMongoId,
   IsOptional,
   IsString,
 } from 'class-validator';
@@ -26,6 +27,6 @@ export class UpdateTaskDto {
   dueDate?: string;
 
   @IsOptional()
-  @IsString({ message: 'Assignee must be a valid user ID' })
+  @IsMongoId({ message: 'Assignee must be a valid Mongo ID' })
   assignee?: string;
 }

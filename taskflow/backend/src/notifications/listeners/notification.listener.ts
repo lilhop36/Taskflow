@@ -75,7 +75,7 @@ export class NotificationListener {
 
     await this.notificationsRepository.create({
       recipient: event.assigneeId as any,
-      type: NotificationType.STATUS_CHANGED,
+      type: NotificationType.COMMENT,
       message: `New comment on task "${event.taskTitle}"`,
       task: event.taskId as any,
     });

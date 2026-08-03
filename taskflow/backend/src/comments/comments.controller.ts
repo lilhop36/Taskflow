@@ -2,22 +2,23 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   HttpCode,
   HttpStatus,
+  NotFoundException,
   Param,
   Patch,
   Post,
+  UseGuards,
 } from '@nestjs/common';
-import { Roles } from '../common/decorators/roles.decorator';
-import { UserRole } from '../users/schemas/user.schema';
 import { CommentsService } from './comments.service';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
-import { TasksService } from '../tasks/tasks.service';
-import { ProjectsService } from '../projects/projects.service';
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import { Task } from '../common/decorators/task.decorator';
+import { ParseMongoIdPipe } from '../common/pipes/parse-mongo-id.pipe';
+import { ProjectMemberGuard } from '../common/guards/project-member.guard';
 
 /**
  * Controller for task comment endpoints.
@@ -25,15 +26,18 @@ import { ForbiddenException, NotFoundException } from '@nestjs/common';
  * Routes are nested under tasks: /api/tasks/:taskId/comments
  * This REST convention makes it clear that comments belong to a parent task.
  *
+ * Project access (FR-007.2) is enforced once by ProjectMemberGuard at the
+ * class level: it loads the task (404 if missing) and verifies the caller
+ * is a member of the parent project (Admins/PMs bypass via BR-001).
+ *
  * SRS: FR-007.1-3
  * UML: Sequence SD-006a (View Comments), SD-006b (Add Comment)
  */
 @Controller('tasks/:taskId/comments')
+@UseGuards(ProjectMemberGuard)
 export class CommentsController {
   constructor(
     private readonly commentsService: CommentsService,
-    private readonly tasksService: TasksService,
-    private readonly projectsService: ProjectsService,
   ) {}
 
   /**
@@ -46,28 +50,10 @@ export class CommentsController {
   @Post()
   @HttpCode(HttpStatus.CREATED)
   async create(
-    @Param('taskId') taskId: string,
+    @Param('taskId', ParseMongoIdPipe) taskId: string,
     @Body() createCommentDto: CreateCommentDto,
     @CurrentUser('_id') userId: string,
   ) {
-    // First, verify the task exists
-    const task = await this.tasksService.findById(taskId);
-    if (!task) {
-      throw new NotFoundException('Task not found');
-    }
-
-    // Check if user is a member of the project
-    const isMember = await this.projectsService.isUserMemberOfProject(
-      userId,
-      task.project.toString(),
-    );
-
-    if (!isMember) {
-      throw new ForbiddenException(
-        'You must be a member of the project to comment on this task',
-      );
-    }
-
     return this.commentsService.create(createCommentDto, taskId, userId);
   }
 
@@ -78,28 +64,7 @@ export class CommentsController {
    */
   @Get()
   @HttpCode(HttpStatus.OK)
-  async findAll(
-    @Param('taskId') taskId: string,
-    @CurrentUser('_id') userId: string,
-  ) {
-    // First, verify the task exists
-    const task = await this.tasksService.findById(taskId);
-    if (!task) {
-      throw new NotFoundException('Task not found');
-    }
-
-    // Check if user is a member of the project
-    const isMember = await this.projectsService.isUserMemberOfProject(
-      userId,
-      task.project.toString(),
-    );
-
-    if (!isMember) {
-      throw new ForbiddenException(
-        'You must be a member of the project to view comments on this task',
-      );
-    }
-
+  async findAll(@Param('taskId', ParseMongoIdPipe) taskId: string) {
     return this.commentsService.findByTask(taskId);
   }
 
@@ -111,29 +76,12 @@ export class CommentsController {
   @Patch(':commentId')
   @HttpCode(HttpStatus.OK)
   async update(
-    @Param('taskId') taskId: string,
-    @Param('commentId') commentId: string,
+    @Param('taskId', ParseMongoIdPipe) taskId: string,
+    @Param('commentId', ParseMongoIdPipe) commentId: string,
     @Body() updateCommentDto: UpdateCommentDto,
+    @Task() task: any,
     @CurrentUser('_id') userId: string,
   ) {
-    // First, verify the task exists
-    const task = await this.tasksService.findById(taskId);
-    if (!task) {
-      throw new NotFoundException('Task not found');
-    }
-
-    // Check if user is a member of the project
-    const isMember = await this.projectsService.isUserMemberOfProject(
-      userId,
-      task.project.toString(),
-    );
-
-    if (!isMember) {
-      throw new ForbiddenException(
-        'You must be a member of the project to update a comment on this task',
-      );
-    }
-
     // Verify the comment exists and belongs to the task
     const comment = await this.commentsService.findCommentById(commentId);
     if (!comment) {
@@ -144,13 +92,6 @@ export class CommentsController {
         'Comment does not belong to the specified task',
       );
     }
-
-    // Optionally, we can check if the user is the author of the comment
-    // For now, we allow any project member to update any comment (as per typical project management tools)
-    // If we want to restrict to author only, we can uncomment the following:
-    // if (comment.author?.toString() !== userId) {
-    //   throw new ForbiddenException('You can only edit your own comments');
-    // }
 
     return this.commentsService.updateComment(
       commentId,
@@ -167,28 +108,11 @@ export class CommentsController {
   @Delete(':commentId')
   @HttpCode(HttpStatus.OK)
   async remove(
-    @Param('taskId') taskId: string,
-    @Param('commentId') commentId: string,
+    @Param('taskId', ParseMongoIdPipe) taskId: string,
+    @Param('commentId', ParseMongoIdPipe) commentId: string,
+    @Task() task: any,
     @CurrentUser('_id') userId: string,
   ) {
-    // First, verify the task exists
-    const task = await this.tasksService.findById(taskId);
-    if (!task) {
-      throw new NotFoundException('Task not found');
-    }
-
-    // Check if user is a member of the project
-    const isMember = await this.projectsService.isUserMemberOfProject(
-      userId,
-      task.project.toString(),
-    );
-
-    if (!isMember) {
-      throw new ForbiddenException(
-        'You must be a member of the project to delete a comment on this task',
-      );
-    }
-
     // Verify the comment exists and belongs to the task
     const comment = await this.commentsService.findCommentById(commentId);
     if (!comment) {
@@ -199,13 +123,6 @@ export class CommentsController {
         'Comment does not belong to the specified task',
       );
     }
-
-    // Optionally, we can check if the user is the author of the comment
-    // For now, we allow any project member to delete any comment (as per typical project tools)
-    // If we want to restrict to author only, we can uncomment the following:
-    // if (comment.author?.toString() !== userId) {
-    //   throw new ForbiddenException('You can only delete your own comments');
-    // }
 
     return this.commentsService.deleteComment(commentId, userId);
   }

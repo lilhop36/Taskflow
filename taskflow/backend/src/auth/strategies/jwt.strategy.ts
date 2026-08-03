@@ -9,6 +9,8 @@ export interface JwtPayload {
   sub: string;
   email: string;
   role: string;
+  /** Refresh-token rotation counter — used to reject revoked tokens. */
+  version?: number;
 }
 
 /**

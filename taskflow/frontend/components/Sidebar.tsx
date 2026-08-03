@@ -9,7 +9,7 @@ const navItems = [
   { href: '/projects', label: 'Projects', roles: ['Administrator', 'ProjectManager', 'TeamMember'] },
   { href: '/tasks', label: 'Tasks', roles: ['Administrator', 'ProjectManager', 'TeamMember'] },
   { href: '/notifications', label: 'Notifications', roles: ['Administrator', 'ProjectManager', 'TeamMember'] },
-  { href: '/reports', label: 'Reports', roles: ['ProjectManager'] },
+  { href: '/reports', label: 'Reports', roles: ['Administrator', 'ProjectManager'] },
   { href: '/teams', label: 'Teams', roles: ['Administrator'] },
   { href: '/users', label: 'Users', roles: ['Administrator'] },
 ];

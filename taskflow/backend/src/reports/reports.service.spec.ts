@@ -96,8 +96,9 @@ describe('ReportsService', () => {
     it('should compute on-time rate for employee tasks', async () => {
       usersService.findById.mockResolvedValue(mockUser);
       tasksRepository.findByAssignee.mockResolvedValue([
-        { _id: 't1', title: 'OnTime', status: TaskStatus.DONE, dueDate: new Date('2024-06-01'), updatedAt: new Date('2024-05-01'), createdAt: new Date('2024-01-01'), project: 'p1' } as any,
-        { _id: 't2', title: 'Late', status: TaskStatus.DONE, dueDate: new Date('2024-06-01'), updatedAt: new Date('2024-07-01'), createdAt: new Date('2024-01-01'), project: 'p1' } as any,
+        // completedAt drives on-time calculation — updatedAt must NOT be used
+        { _id: 't1', title: 'OnTime', status: TaskStatus.DONE, dueDate: new Date('2024-06-01'), completedAt: new Date('2024-05-01'), updatedAt: new Date('2024-09-01'), project: 'p1' } as any,
+        { _id: 't2', title: 'Late', status: TaskStatus.DONE, dueDate: new Date('2024-06-01'), completedAt: new Date('2024-07-01'), updatedAt: new Date('2024-07-01'), project: 'p1' } as any,
       ]);
 
       const result = await service.getEmployeeReport('user-1');

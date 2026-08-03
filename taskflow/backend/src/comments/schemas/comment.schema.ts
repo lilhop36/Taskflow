@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, Types } from 'mongoose';
+import { HydratedDocument, SchemaTypes, Types } from 'mongoose';
 
 export type CommentDocument = HydratedDocument<Comment>;
 
@@ -9,8 +9,7 @@ export type CommentDocument = HydratedDocument<Comment>;
  * SRS: FR-007.1-3
  * - Chronological thread per task (FR-007.1)
  * - Plain text only (FR-007.1)
- * - Automatic author + timestamp on every post (FR-007.3)
- * - Authorized project members can post (FR-007.2 — enforced in service)
+ * - Automatic author + timestamp on every post (FR-007.3)   * - Authorized project members can post (FR-007.2 — enforced in controller)
  * - Edit history and soft delete for audit trail (BR-005)
  *
  * UML: Class diagram — Comment class, association with Task and User
@@ -28,17 +27,24 @@ export class Comment {
    * Reference to the parent Task. Every comment belongs to exactly one task.
    * This enables the "comments per task" view required by FR-007.1.
    */
-  @Prop({ required: true, type: Types.ObjectId, ref: 'Task' })
+  @Prop({ required: true, type: SchemaTypes.ObjectId, ref: 'Task' })
   task: Types.ObjectId;
+
+  /**
+   * Reference to the parent Comment this comment replies to.
+   * Optional — top-level comments have no replyTo; replies form a nested,
+   * chronological thread under their parent comment (threaded comments).
+   */
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Comment' })
+  replyTo?: Types.ObjectId;
 
   /**
    * Reference to the User who wrote this comment.
    * FR-007.3 requires sender's name to be appended — the name is resolved
    * via populate('author') when fetching, avoiding denormalization.
-   *
-   * Optional until JwtAuthGuard is wired globally (then it's always provided).
+   * Always provided via @CurrentUser() now that JwtAuthGuard is global.
    */
-  @Prop({ type: Types.ObjectId, ref: 'User' })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'User' })
   author?: Types.ObjectId;
 
   /**
@@ -58,7 +64,7 @@ export class Comment {
       {
         content: { type: String, required: true },
         editedAt: { type: Date, default: Date.now },
-        editedBy: { type: Types.ObjectId, ref: 'User' },
+        editedBy: { type: SchemaTypes.ObjectId, ref: 'User' },
       },
     ],
     default: [],
@@ -81,7 +87,7 @@ export class Comment {
    * Reference to the User who deleted this comment.
    * Part of BR-005: Comment audit trail.
    */
-  @Prop({ type: Types.ObjectId, ref: 'User' })
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'User' })
   deletedBy?: Types.ObjectId;
 }
 

@@ -10,6 +10,7 @@ import {
   Query,
 } from '@nestjs/common';
 import { Roles } from '../common/decorators/roles.decorator';
+import { ParseMongoIdPipe } from '../common/pipes/parse-mongo-id.pipe';
 import { UserRole } from '../users/schemas/user.schema';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
@@ -28,10 +29,11 @@ export class TasksController {
   }
 
   @Get()
+  @Roles(UserRole.TEAM_MEMBER)
   @HttpCode(HttpStatus.OK)
   async findAll(
-    @Query('project') projectId?: string,
-    @Query('assignee') assigneeId?: string,
+    @Query('project', ParseMongoIdPipe) projectId?: string,
+    @Query('assignee', ParseMongoIdPipe) assigneeId?: string,
   ) {
     if (projectId) {
       return this.tasksService.findByProject(projectId);
@@ -43,24 +45,26 @@ export class TasksController {
   }
 
   @Get(':id')
+  @Roles(UserRole.TEAM_MEMBER)
   @HttpCode(HttpStatus.OK)
-  async findOne(@Param('id') id: string) {
+  async findOne(@Param('id', ParseMongoIdPipe) id: string) {
     return this.tasksService.findById(id);
   }
 
   @Patch(':id')
   @HttpCode(HttpStatus.OK)
   async update(
-    @Param('id') id: string,
+    @Param('id', ParseMongoIdPipe) id: string,
     @Body() updateTaskDto: UpdateTaskDto,
   ) {
     return this.tasksService.update(id, updateTaskDto);
   }
 
   @Patch(':id/status')
+  @Roles(UserRole.TEAM_MEMBER)
   @HttpCode(HttpStatus.OK)
   async updateStatus(
-    @Param('id') id: string,
+    @Param('id', ParseMongoIdPipe) id: string,
     @Body() updateStatusDto: UpdateTaskStatusDto,
   ) {
     return this.tasksService.updateStatus(id, updateStatusDto);

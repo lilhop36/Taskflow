@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:3002/api',
+  baseURL: 'http://localhost:3001/api',
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
 });
@@ -15,7 +15,7 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        await axios.post('http://localhost:3002/api/auth/refresh', {}, { withCredentials: true });
+        await axios.post('http://localhost:3001/api/auth/refresh', {}, { withCredentials: true });
         return api(originalRequest);
       } catch {
         if (window.location.pathname !== '/login') {

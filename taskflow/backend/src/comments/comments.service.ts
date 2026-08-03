@@ -36,10 +36,9 @@ export class CommentsService {
    * Step 3: Emit an event so notification listeners can react.
    *
    * FR-007.2: "authorized users who have access to the parent project"
-   * — access control is delegated to the controller/auth layer. By the time
-   * this service runs, the user is authenticated. The task existence check
-   * is the minimum guard; full RBAC (project membership) will be enforced
-   * once auth guards are wired globally.
+   * — project membership is enforced in CommentsController via
+   * ProjectsService.isUserMemberOfProject (owner or members array).
+   * By the time this service runs, the user is authenticated and authorized.
    */
   async create(
     createCommentDto: CreateCommentDto,
@@ -57,7 +56,7 @@ export class CommentsService {
       content: createCommentDto.content,
       task: new Types.ObjectId(taskId),
     };
-    // Only set author when a valid ID is provided (guards not wired yet)
+    // authorId is always provided by the controller via @CurrentUser()
     if (authorId) {
       commentData.author = new Types.ObjectId(authorId);
     }
@@ -113,13 +112,6 @@ export class CommentsService {
       throw new NotFoundException(`Comment with ID ${commentId} not found`);
     }
 
-    // Step 3: Fire event for notification/audit listeners
-    this.eventEmitter.emit('comment.updated', {
-      commentId,
-      updatedBy,
-      updatedAt: new Date(),
-    });
-
     return updatedComment.toObject();
   }
 
@@ -149,13 +141,6 @@ export class CommentsService {
     if (!deletedComment) {
       throw new NotFoundException(`Comment with ID ${commentId} not found`);
     }
-
-    // Step 3: Fire event for notification/audit listeners
-    this.eventEmitter.emit('comment.deleted', {
-      commentId,
-      deletedBy,
-      deletedAt: new Date(),
-    });
 
     return deletedComment.toObject();
   }
