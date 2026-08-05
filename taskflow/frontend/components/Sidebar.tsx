@@ -25,13 +25,15 @@ export default function Sidebar() {
   const pathname = usePathname();
   // Unread notification count for the badge — refetched on every navigation
   // so it reflects reads/dismissals done on the notifications page.
+  // Uses the dedicated count endpoint instead of downloading the whole
+  // unread list just to render a badge.
   const [unread, setUnread] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
     api
-      .get('/notifications')
-      .then((r) => { if (!cancelled && Array.isArray(r.data)) setUnread(r.data.length); })
+      .get('/notifications/unread-count')
+      .then((r) => { if (!cancelled && typeof r.data?.count === 'number') setUnread(r.data.count); })
       .catch(() => { /* ignore — badge stays hidden on failure */ });
     return () => { cancelled = true; };
   }, [pathname]);

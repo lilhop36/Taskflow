@@ -43,6 +43,24 @@ export class NotificationsRepository {
   }
 
   /**
+   * Count the user's unread notifications — powers the sidebar badge
+   * without shipping the full list. Ownership-scoped to the recipient,
+   * matching findUnreadByUser so the badge can never leak another user's
+   * count.
+   *
+   * FR-008.4: "view current notifications" (badge count).
+   */
+  async countUnreadByUser(userId: string): Promise<number> {
+    if (!userId) return 0;
+    return this.notificationModel
+      .countDocuments({
+        recipient: new Types.ObjectId(userId),
+        read: false,
+      })
+      .exec();
+  }
+
+  /**
    * Fetch all unread notifications for a user, newest first.
    * FR-008.4: "view current notifications."
    *

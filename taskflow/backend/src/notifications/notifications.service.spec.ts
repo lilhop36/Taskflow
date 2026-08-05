@@ -22,6 +22,7 @@ describe('NotificationsService', () => {
             create: jest.fn(),
             findUnreadByUser: jest.fn(),
             findByUser: jest.fn(),
+            countUnreadByUser: jest.fn(),
             markAsRead: jest.fn(),
             markAllAsRead: jest.fn(),
           },
@@ -47,6 +48,15 @@ describe('NotificationsService', () => {
       repository.findUnreadByUser.mockResolvedValue([]);
       const result = await service.findUnreadByUser('user-1');
       expect(result).toEqual([]);
+    });
+  });
+
+  describe('countUnreadByUser() — badge count (FR-008.4)', () => {
+    it('should return the unread count for a user', async () => {
+      repository.countUnreadByUser.mockResolvedValue(3);
+      const result = await service.countUnreadByUser('user-1');
+      expect(result).toBe(3);
+      expect(repository.countUnreadByUser).toHaveBeenCalledWith('user-1');
     });
   });
 

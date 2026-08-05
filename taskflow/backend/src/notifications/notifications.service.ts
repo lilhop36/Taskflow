@@ -15,6 +15,15 @@ export class NotificationsService {
   ) {}
 
   /**
+   * Returns the number of the user's unread notifications — feeds the
+   * sidebar badge without downloading the full list.
+   * FR-008.4: "view current notifications" (badge count).
+   */
+  async countUnreadByUser(userId: string) {
+    return this.notificationsRepository.countUnreadByUser(userId);
+  }
+
+  /**
    * Returns all unread notifications for a user (newest-first).
    * FR-008.4: "Notification Center — view current notifications."
    */

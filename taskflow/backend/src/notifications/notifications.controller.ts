@@ -1,10 +1,4 @@
-import {
-  Controller,
-  Get,
-  Param,
-  Patch,
-  Query,
-} from '@nestjs/common';
+import { Controller, Get, Param, Patch, Query } from '@nestjs/common';
 import { NotificationsService } from './notifications.service';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { ParseMongoIdPipe } from '../common/pipes/parse-mongo-id.pipe';
@@ -19,9 +13,7 @@ import { ParseMongoIdPipe } from '../common/pipes/parse-mongo-id.pipe';
  */
 @Controller('notifications')
 export class NotificationsController {
-  constructor(
-    private readonly notificationsService: NotificationsService,
-  ) {}
+  constructor(private readonly notificationsService: NotificationsService) {}
 
   /**
    * FR-008.4: View notifications for the current user.
@@ -40,6 +32,19 @@ export class NotificationsController {
       return this.notificationsService.findByUser(userId);
     }
     return this.notificationsService.findUnreadByUser(userId);
+  }
+
+  /**
+   * FR-008.4: Unread count for the sidebar badge.
+   * GET /api/notifications/unread-count
+   *
+   * Returns just the count, so the UI badge never has to download the
+   * full unread list. Ownership-scoped to the authenticated user.
+   */
+  @Get('unread-count')
+  async unreadCount(@CurrentUser('_id') userId: string) {
+    const count = await this.notificationsService.countUnreadByUser(userId);
+    return { count };
   }
 
   /**

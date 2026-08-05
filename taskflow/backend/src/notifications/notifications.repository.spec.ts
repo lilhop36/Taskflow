@@ -106,3 +106,38 @@ describe('NotificationsRepository.create — the persistence seam', () => {
     expect(doc.type).toBe(NotificationType.COMMENT);
   });
 });
+
+describe('NotificationsRepository.countUnreadByUser — the badge count', () => {
+  let countDocuments: jest.Mock;
+  let notificationModel: { countDocuments: jest.Mock };
+  let repository: NotificationsRepository;
+
+  beforeEach(() => {
+    countDocuments = jest
+      .fn()
+      .mockReturnValue({ exec: jest.fn().mockResolvedValue(3) });
+    notificationModel = { countDocuments };
+    repository = new NotificationsRepository(
+      notificationModel as unknown as Model<NotificationDocument>,
+    );
+  });
+
+  it('counts only unread notifications scoped to the authenticated user', async () => {
+    const count = await repository.countUnreadByUser(RECIPIENT);
+
+    expect(count).toBe(3);
+    // Ownership-scoped: the recipient filter must be the user's ObjectId,
+    // so the count can never leak another user's notifications.
+    expect(countDocuments).toHaveBeenCalledWith({
+      recipient: new Types.ObjectId(RECIPIENT),
+      read: false,
+    });
+  });
+
+  it('returns 0 without querying when userId is missing', async () => {
+    const count = await repository.countUnreadByUser('');
+
+    expect(count).toBe(0);
+    expect(countDocuments).not.toHaveBeenCalled();
+  });
+});
