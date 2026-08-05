@@ -1,7 +1,18 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, SchemaTypes, Types } from 'mongoose';
+import { refId } from '../../common/ref-id';
 
-export type CommentDocument = HydratedDocument<Comment>;
+/**
+ * Stable ref-id surface on Comment documents (populated or raw ObjectId).
+ * `authorId` resolves the author ref to its id string regardless of whether
+ * the repository populated it — the seam that fixes the runtime
+ * `toString()`-on-populated-doc bug.
+ */
+export interface CommentDocumentRefs {
+  authorId: string | null;
+}
+
+export type CommentDocument = HydratedDocument<Comment> & CommentDocumentRefs;
 
 /**
  * Comment — represents a single message in a task-level comment thread.
@@ -92,3 +103,7 @@ export class Comment {
 }
 
 export const CommentSchema = SchemaFactory.createForClass(Comment);
+
+CommentSchema.virtual('authorId').get(function (this: CommentDocument) {
+  return refId(this.author);
+});

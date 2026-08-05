@@ -4,5 +4,8 @@
   "workspaces": [
     "backend",
     "frontend"
-  ]
+  ],
+  "dependencies": {
+    "isexe": "^2.0.0"
+  }
 }

@@ -41,68 +41,76 @@ export default function ReportsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Reports (FR-009)</h1>
+      <header className="mb-8">
+        <p className="eyebrow">Document summaries</p>
+        <h1 className="page-title mt-1">Reports</h1>
+        <span className="thread mt-3 w-14" aria-hidden="true" />
+      </header>
 
-      <div className="grid grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
         {/* Project report */}
-        <div className="bg-white rounded-lg shadow p-4">
-          <h2 className="text-sm font-semibold mb-3">Project Status Report</h2>
+        <div className="card p-5">
+          <h2 className="font-display text-lg font-semibold tracking-tight text-ink">Project Status Report</h2>
           <select value={selectedProject} onChange={(e) => setSelectedProject(e.target.value)}
-            className="w-full border rounded px-3 py-2 text-sm mb-3">
+            className="input mt-3">
             <option value="">Select project…</option>
             {projects.map((p) => <option key={p._id} value={p._id}>{p.name}</option>)}
           </select>
-          <button onClick={fetchProjectReport}
-            className="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">
+          <button onClick={fetchProjectReport} disabled={!selectedProject} className="btn-gold mt-3">
             Generate
           </button>
         </div>
 
         {/* Employee report */}
-        <div className="bg-white rounded-lg shadow p-4">
-          <h2 className="text-sm font-semibold mb-3">Employee Performance Report</h2>
+        <div className="card p-5">
+          <h2 className="font-display text-lg font-semibold tracking-tight text-ink">Employee Performance Report</h2>
           <select value={selectedUser} onChange={(e) => setSelectedUser(e.target.value)}
-            className="w-full border rounded px-3 py-2 text-sm mb-3">
+            className="input mt-3">
             <option value="">Select employee…</option>
             {users.map((u) => <option key={u._id} value={u._id}>{u.firstName} {u.lastName}</option>)}
           </select>
-          <button onClick={fetchEmployeeReport}
-            className="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">
+          <button onClick={fetchEmployeeReport} disabled={!selectedUser} className="btn-gold mt-3">
             Generate
           </button>
         </div>
       </div>
 
       {report && (
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="card p-6">
           {report.type === 'project' ? (
             <>
-              <h2 className="text-lg font-bold mb-3">{report.data.project.name} — Report</h2>
-              <div className="grid grid-cols-4 gap-4 mb-4">
-                <div><p className="text-xs text-gray-400">Total Tasks</p><p className="text-xl font-bold">{report.data.taskSummary.total}</p></div>
-                <div><p className="text-xs text-gray-400">To Do</p><p className="text-xl font-bold text-gray-500">{report.data.taskSummary.todo}</p></div>
-                <div><p className="text-xs text-gray-400">In Progress</p><p className="text-xl font-bold text-blue-600">{report.data.taskSummary.inProgress}</p></div>
-                <div><p className="text-xs text-gray-400">Done</p><p className="text-xl font-bold text-green-600">{report.data.taskSummary.done}</p></div>
+              <p className="eyebrow">Project report</p>
+              <h2 className="font-display text-2xl font-semibold tracking-tight text-ink mt-1">
+                {report.data.project.name}
+              </h2>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-5 border-t border-black/5 pt-5">
+                <div><p className="font-mono text-[10px] uppercase tracking-[0.14em] text-sage">Total Tasks</p><p className="font-mono text-2xl font-semibold text-ink">{report.data.taskSummary.total}</p></div>
+                <div><p className="font-mono text-[10px] uppercase tracking-[0.14em] text-sage">To Do</p><p className="font-mono text-2xl font-semibold text-sage">{report.data.taskSummary.todo}</p></div>
+                <div><p className="font-mono text-[10px] uppercase tracking-[0.14em] text-sage">In Progress</p><p className="font-mono text-2xl font-semibold text-gold-deep">{report.data.taskSummary.inProgress}</p></div>
+                <div><p className="font-mono text-[10px] uppercase tracking-[0.14em] text-sage">Done</p><p className="font-mono text-2xl font-semibold text-teal">{report.data.taskSummary.done}</p></div>
               </div>
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div><span className="text-gray-400">Completion:</span> {report.data.taskSummary.completionPercent}%</div>
-                <div><span className="text-gray-400">Time progress:</span> {report.data.timeProgressPercent}%</div>
-                <div><span className="text-gray-400">Overdue:</span> <span className="text-red-600">{report.data.overdueCount}</span></div>
-                <div><span className="text-gray-400">Remaining:</span> {report.data.remainingWorkload}</div>
+              <div className="mt-4 grid grid-cols-2 gap-3 text-sm border-t border-black/5 pt-4">
+                <div><span className="font-mono text-[11px] text-sage">Completion:</span> <span className="font-medium text-ink">{report.data.taskSummary.completionPercent}%</span></div>
+                <div><span className="font-mono text-[11px] text-sage">Time progress:</span> <span className="font-medium text-ink">{report.data.timeProgressPercent}%</span></div>
+                <div><span className="font-mono text-[11px] text-sage">Overdue:</span> <span className="font-medium text-ember">{report.data.overdueCount}</span></div>
+                <div><span className="font-mono text-[11px] text-sage">Remaining:</span> <span className="font-medium text-ink">{report.data.remainingWorkload}</span></div>
               </div>
             </>
           ) : (
             <>
-              <h2 className="text-lg font-bold mb-3">{report.data.employee.firstName} {report.data.employee.lastName} — Performance</h2>
-              <div className="grid grid-cols-4 gap-4 mb-4">
-                <div><p className="text-xs text-gray-400">Assigned</p><p className="text-xl font-bold">{report.data.taskSummary.totalAssigned}</p></div>
-                <div><p className="text-xs text-gray-400">On Time</p><p className="text-xl font-bold text-green-600">{report.data.taskSummary.completedOnTime}</p></div>
-                <div><p className="text-xs text-gray-400">Late</p><p className="text-xl font-bold text-red-600">{report.data.taskSummary.completedLate}</p></div>
-                <div><p className="text-xs text-gray-400">Active</p><p className="text-xl font-bold text-blue-600">{report.data.taskSummary.activeWorkload}</p></div>
+              <p className="eyebrow">Performance report</p>
+              <h2 className="font-display text-2xl font-semibold tracking-tight text-ink mt-1">
+                {report.data.employee.firstName} {report.data.employee.lastName}
+              </h2>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-5 border-t border-black/5 pt-5">
+                <div><p className="font-mono text-[10px] uppercase tracking-[0.14em] text-sage">Assigned</p><p className="font-mono text-2xl font-semibold text-ink">{report.data.taskSummary.totalAssigned}</p></div>
+                <div><p className="font-mono text-[10px] uppercase tracking-[0.14em] text-sage">On Time</p><p className="font-mono text-2xl font-semibold text-teal">{report.data.taskSummary.completedOnTime}</p></div>
+                <div><p className="font-mono text-[10px] uppercase tracking-[0.14em] text-sage">Late</p><p className="font-mono text-2xl font-semibold text-ember">{report.data.taskSummary.completedLate}</p></div>
+                <div><p className="font-mono text-[10px] uppercase tracking-[0.14em] text-sage">Active</p><p className="font-mono text-2xl font-semibold text-gold-deep">{report.data.taskSummary.activeWorkload}</p></div>
               </div>
-              <div className="text-sm">
-                <span className="text-gray-400">On-time rate:</span> {report.data.performanceMetrics.onTimeRate ?? 'N/A'}%
-                &nbsp;· <span className="text-gray-400">Missed deadlines:</span> {report.data.performanceMetrics.missedDeadlines}
+              <div className="mt-4 text-sm border-t border-black/5 pt-4">
+                <span className="font-mono text-[11px] text-sage">On-time rate:</span> <span className="font-medium text-ink">{report.data.performanceMetrics.onTimeRate ?? 'N/A'}%</span>
+                &nbsp;· <span className="font-mono text-[11px] text-sage">Missed deadlines:</span> <span className="font-medium text-ember">{report.data.performanceMetrics.missedDeadlines}</span>
               </div>
             </>
           )}

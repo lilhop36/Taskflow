@@ -1,7 +1,9 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import api from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 
 const navItems = [
@@ -21,33 +23,81 @@ const navItems = [
 export default function Sidebar() {
   const { user, logout } = useAuth();
   const pathname = usePathname();
+  // Unread notification count for the badge — refetched on every navigation
+  // so it reflects reads/dismissals done on the notifications page.
+  const [unread, setUnread] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .get('/notifications')
+      .then((r) => { if (!cancelled && Array.isArray(r.data)) setUnread(r.data.length); })
+      .catch(() => { /* ignore — badge stays hidden on failure */ });
+    return () => { cancelled = true; };
+  }, [pathname]);
 
   const visibleItems = navItems.filter((item) => item.roles.includes(user?.role ?? 'TeamMember'));
+  const initials = `${user?.firstName?.[0] ?? ''}${user?.lastName?.[0] ?? ''}`.toUpperCase();
 
   return (
-    <aside className="w-56 bg-gray-900 text-white flex flex-col shrink-0">
-      <div className="px-4 py-5 border-b border-gray-700">
-        <h1 className="text-lg font-bold">TaskFlow</h1>
-        <p className="text-xs text-gray-400 mt-1">{user?.firstName} {user?.lastName}</p>
+    <aside className="w-56 bg-ink text-white flex flex-col shrink-0">
+      {/* Wordmark + user readout */}
+      <div className="px-5 pt-6 pb-5 border-b border-ink-line">
+        <h1 className="font-display text-2xl font-semibold tracking-tight text-card">
+          Task<span className="text-gold">Flow</span>
+        </h1>
+        <span className="thread mt-2 w-10" aria-hidden="true" />
+        <div className="mt-4 flex items-center gap-2.5">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gold/15 font-mono text-xs font-semibold text-gold">
+            {initials || '?'}
+          </span>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium text-card">
+              {user?.firstName} {user?.lastName}
+            </p>
+            <p className="truncate font-mono text-[10px] uppercase tracking-[0.12em] text-sand">
+              {user?.role ?? '—'}
+            </p>
+          </div>
+        </div>
       </div>
-      <nav className="flex-1 px-2 py-4 space-y-1">
+
+      {/* Nav */}
+      <nav className="flex-1 px-3 py-5 space-y-1">
         {visibleItems.map((item) => {
           const active = pathname.startsWith(item.href);
+          const showBadge = item.href === '/notifications' && unread > 0;
           return (
             <Link
               key={item.href}
               href={item.href}
-              className={`block px-3 py-2 rounded text-sm ${
-                active ? 'bg-gray-700 text-white' : 'text-gray-300 hover:bg-gray-800'
+              className={`relative block rounded-md px-3 py-2 text-sm transition-colors ${
+                active
+                  ? 'bg-white/5 font-semibold text-gold'
+                  : 'text-sand hover:bg-white/5 hover:text-card'
               }`}
             >
-              {item.label}
+              {active && (
+                <span className="absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-gold" aria-hidden="true" />
+              )}
+              <span className="flex items-center justify-between">
+                {item.label}
+                {showBadge && (
+                  <span className="ml-2 inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 rounded-full bg-gold font-mono text-[10px] font-semibold text-ink">
+                    {unread > 99 ? '99+' : unread}
+                  </span>
+                )}
+              </span>
             </Link>
           );
         })}
       </nav>
-      <div className="px-2 pb-4">
-        <button onClick={logout} className="w-full text-left px-3 py-2 text-sm text-gray-400 hover:text-white">
+
+      <div className="px-3 pb-5 border-t border-ink-line pt-4">
+        <button
+          onClick={logout}
+          className="w-full text-left px-3 py-2 text-sm text-sand transition-colors hover:text-gold"
+        >
           Sign out
         </button>
       </div>

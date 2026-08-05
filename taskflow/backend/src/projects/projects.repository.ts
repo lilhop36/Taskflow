@@ -37,6 +37,51 @@ export class ProjectsRepository {
       .exec();
   }
 
+  /**
+   * Finds projects a user owns or is listed as a member of. Used to scope
+   * the project list for Team Members — they must not see projects they
+   * don't belong to.
+   */
+  async findByMember(userId: string): Promise<ProjectDocument[]> {
+    return this.projectModel
+      .find({ $or: [{ owner: userId }, { members: userId }] })
+      .populate('owner', '-passwordHash')
+      .populate('members', '-passwordHash')
+      .populate('teams', 'name description')
+      .exec();
+  }
+
+  /**
+   * Returns only the _ids of projects a user owns or belongs to — the
+   * minimal lookup TasksService uses to scope task queries for Team Members.
+   */
+  async findIdsForMember(userId: string): Promise<Types.ObjectId[]> {
+    const projects = await this.projectModel
+      .find({ $or: [{ owner: userId }, { members: userId }] })
+      .select('_id')
+      .exec();
+    return projects.map((p) => p._id);
+  }
+
+  /**
+   * Lightweight id + name lookup for the dashboard project dropdown.
+   * With a userId it's scoped to projects the user owns/belongs to;
+   * without one it returns every project (Admin/PM view). Lean docs,
+   * no population — the Dashboard needs nothing else.
+   */
+  async findIdNameForMember(
+    userId?: string,
+  ): Promise<{ _id: Types.ObjectId; name: string }[]> {
+    const filter = userId
+      ? { $or: [{ owner: userId }, { members: userId }] }
+      : {};
+    return this.projectModel
+      .find(filter)
+      .select('_id name')
+      .lean<{ _id: Types.ObjectId; name: string }[]>()
+      .exec();
+  }
+
   async update(
     id: string,
     data: Partial<Project>,
@@ -51,23 +96,24 @@ export class ProjectsRepository {
 
   async archive(id: string): Promise<ProjectDocument | null> {
     return this.projectModel
-      .findByIdAndUpdate(
-        id,
-        { status: 'Archived' },
-        { new: true },
-      )
+      .findByIdAndUpdate(id, { status: 'Archived' }, { new: true })
       .populate('owner', '-passwordHash')
       .exec();
   }
 
   async countActiveTasks(id: string): Promise<number> {
-    return this.taskModel.countDocuments({
-      project: new Types.ObjectId(id),
-      status: { $ne: TaskStatus.DONE },
-    }).exec();
+    return this.taskModel
+      .countDocuments({
+        project: new Types.ObjectId(id),
+        status: { $ne: TaskStatus.DONE },
+      })
+      .exec();
   }
 
-  async isUserMemberOfProject(userId: string, projectId: string): Promise<boolean> {
+  async isUserMemberOfProject(
+    userId: string,
+    projectId: string,
+  ): Promise<boolean> {
     const project = await this.projectModel
       .findById(projectId)
       .select('owner members')
@@ -86,6 +132,6 @@ export class ProjectsRepository {
     }
 
     // Check if userId exists in the members array
-    return project.members.some(memberId => memberId.equals(userObjectId));
+    return project.members.some((memberId) => memberId.equals(userObjectId));
   }
 }

@@ -33,13 +33,14 @@ export class NotificationListener {
    * FR-008.1: "The system shall automatically notify the user when a
    * task is assigned to them."
    */
-  @OnEvent('task.assigned')
+  @OnEvent(TaskAssignedEvent.eventName)
   async handleTaskAssigned(event: TaskAssignedEvent) {
     await this.notificationsRepository.create({
-      recipient: event.assigneeId as any,
+      recipient: event.assigneeId,
       type: NotificationType.TASK_ASSIGNED,
       message: `You have been assigned to task: "${event.taskTitle}"`,
-      task: event.taskId as any,
+      task: event.taskId,
+      sender: event.assignedBy,
     });
   }
 
@@ -49,36 +50,68 @@ export class NotificationListener {
    * FR-008.2: "The system shall notify assigned users when a task
    * status changes."
    */
-  @OnEvent('task.status-changed')
+  @OnEvent(TaskStatusChangedEvent.eventName)
   async handleTaskStatusChanged(event: TaskStatusChangedEvent) {
     await this.notificationsRepository.create({
-      recipient: event.assigneeId as any,
+      recipient: event.assigneeId,
       type: NotificationType.STATUS_CHANGED,
       message: `Task "${event.taskTitle}" moved from ${event.oldStatus} to ${event.newStatus}`,
-      task: event.taskId as any,
+      task: event.taskId,
+      sender: event.changedBy,
     });
   }
 
   /**
-   * Handles CommentCreatedEvent → notifies the task assignee.
+   * Handles CommentCreatedEvent → notifies the task assignee and, for
+   * replies, the author of the parent comment.
    *
-   * Skips self-notifications: you don't need an alert when you
-   * comment on your own task.
+   * Threaded comments:
+   * - A new comment notifies the task assignee.
+   * - A reply additionally notifies the original comment author.
+   * - Self-notifications are always skipped: nobody is alerted about
+   *   their own action (commenting on their own task, replying to
+   *   their own comment).
+   * - Recipients are deduped — if the assignee and the parent author
+   *   are the same person, only one notification is created (the more
+   *   specific reply message wins).
    */
-  @OnEvent('comment.created')
+  @OnEvent(CommentCreatedEvent.eventName)
   async handleCommentCreated(event: CommentCreatedEvent) {
-    // No assignee → nowhere to send the notification
-    if (!event.assigneeId) return;
+    // recipientId -> message (Map dedupes; set() overwrites with the
+    // more specific reply message when the same user fills both roles)
+    const recipients = new Map<string, string>();
 
-    // Skip self-notifications
-    if (event.assigneeId === event.authorId) return;
+    // Notify the task assignee of the new comment (skip self / no assignee).
+    // The message names the commenter (e.g. "Hanna Girma commented on task…").
+    if (event.assigneeId && event.assigneeId !== event.authorId) {
+      recipients.set(
+        event.assigneeId,
+        `${event.authorName ?? 'Someone'} commented on task "${event.taskTitle}"`,
+      );
+    } // Notify the parent comment's author when this is a reply
+    // (skip self: replying to your own comment needs no alert). The message
+    // names the replier (e.g. "Liya replied to your comment…").
+    if (
+      event.replyTo &&
+      event.parentAuthorId &&
+      event.parentAuthorId !== event.authorId
+    ) {
+      recipients.set(
+        event.parentAuthorId,
+        `${event.authorName ?? 'Someone'} replied to your comment on task "${event.taskTitle}"`,
+      );
+    }
 
-    await this.notificationsRepository.create({
-      recipient: event.assigneeId as any,
-      type: NotificationType.COMMENT,
-      message: `New comment on task "${event.taskTitle}"`,
-      task: event.taskId as any,
-    });
+    for (const [recipient, message] of recipients) {
+      await this.notificationsRepository.create({
+        recipient,
+        type: NotificationType.COMMENT,
+        message,
+        task: event.taskId,
+        comment: event.commentId,
+        sender: event.authorId,
+      });
+    }
   }
 
   /**
@@ -88,13 +121,14 @@ export class NotificationListener {
    * alert to the assignee when an incomplete task is within 24 hours of
    * its due date."
    */
-  @OnEvent('task.deadline-urgent')
+  @OnEvent(TaskDeadlineUrgentEvent.eventName)
   async handleTaskDeadlineUrgent(event: TaskDeadlineUrgentEvent) {
+    // System-generated alert (cron) — no sender to attribute.
     await this.notificationsRepository.create({
-      recipient: event.assigneeId as any,
+      recipient: event.assigneeId,
       type: NotificationType.DEADLINE_URGENT,
       message: `URGENT: Task "${event.taskTitle}" is due in ${event.hoursRemaining} hour(s)`,
-      task: event.taskId as any,
+      task: event.taskId,
     });
   }
 }

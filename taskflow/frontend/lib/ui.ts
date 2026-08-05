@@ -5,47 +5,50 @@
  * previously duplicated inline in every page (tasks, projects, users, ...).
  * Keeping them here guarantees every list, badge, and detail view renders
  * the same colors — change one map, all pages follow.
+ *
+ * Palette (see globals.css): teal = done/success, gold = in progress/accent,
+ * ember = overdue/high, sage = neutral metadata.
  */
 
 /** Text color class for a task's lifecycle status (FR-005). */
 export function statusColor(status: string): string {
   return status === 'Done'
-    ? 'text-green-600'
+    ? 'text-teal'
     : status === 'In Progress'
-      ? 'text-blue-600'
-      : 'text-gray-500';
+      ? 'text-gold-deep'
+      : 'text-sage';
 }
 
 /** Text color class for a task's priority. */
 export function priorityColor(priority: string): string {
   return priority === 'High'
-    ? 'text-red-600'
+    ? 'text-ember'
     : priority === 'Medium'
-      ? 'text-yellow-600'
-      : 'text-gray-500';
+      ? 'text-gold-deep'
+      : 'text-sage';
 }
 
 /** Text color class for a user's role (BR-001 hierarchy). */
 export function roleColor(role: string): string {
   return role === 'Administrator'
-    ? 'text-purple-600'
+    ? 'text-gold-deep'
     : role === 'ProjectManager'
-      ? 'text-blue-600'
-      : 'text-gray-600';
+      ? 'text-teal'
+      : 'text-sage';
 }
 
 /** Full badge classes for a project's lifecycle status. */
 export function projectStatusBadge(status: string): string {
   return status === 'Active'
-    ? 'bg-green-100 text-green-700'
-    : 'bg-gray-100 text-gray-500';
+    ? 'bg-teal-soft text-teal'
+    : 'bg-black/5 text-sage';
 }
 
 /** Full badge classes for a user's account status. */
 export function userStatusBadge(status: string): string {
   return status === 'Active'
-    ? 'bg-green-100 text-green-700'
-    : 'bg-red-100 text-red-700';
+    ? 'bg-teal-soft text-teal'
+    : 'bg-ember-soft text-ember';
 }
 
 /**

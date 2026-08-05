@@ -80,14 +80,19 @@ describe('AllExceptionsFilter', () => {
     filter.catch(validationError, makeHost(res));
 
     expect(res.statusCode).toBe(400);
-    expect((res.body as any).message).toBe('Title is required; Due date is invalid');
+    expect((res.body as any).message).toBe(
+      'Title is required; Due date is invalid',
+    );
   });
 
   it('should map a BSONError to a 400', () => {
     const res = makeResponse();
-    const bsonError = Object.assign(new Error('input must be a 24 character hex string'), {
-      name: 'BSONError',
-    });
+    const bsonError = Object.assign(
+      new Error('input must be a 24 character hex string'),
+      {
+        name: 'BSONError',
+      },
+    );
 
     filter.catch(bsonError, makeHost(res));
 
@@ -110,7 +115,9 @@ describe('AllExceptionsFilter', () => {
 
   it('should return a sanitized 500 for unknown errors (no internals leaked)', () => {
     const res = makeResponse();
-    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const consoleSpy = jest
+      .spyOn(console, 'error')
+      .mockImplementation(() => {});
 
     filter.catch(new Error('SENSITIVE_INTERNAL_DETAILS'), makeHost(res));
 
@@ -119,7 +126,9 @@ describe('AllExceptionsFilter', () => {
       statusCode: 500,
       message: 'Internal server error',
     });
-    expect(JSON.stringify(res.body)).not.toContain('SENSITIVE_INTERNAL_DETAILS');
+    expect(JSON.stringify(res.body)).not.toContain(
+      'SENSITIVE_INTERNAL_DETAILS',
+    );
     consoleSpy.mockRestore();
   });
 

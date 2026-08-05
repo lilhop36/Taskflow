@@ -19,7 +19,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   // While checking the session, show a minimal spinner
   if (loading) {
     return (
-      <div className="h-full flex items-center justify-center text-gray-400 text-sm">
+      <div className="h-full flex items-center justify-center text-sage text-sm">
         Loading…
       </div>
     );
@@ -29,7 +29,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   if (!user) {
     return (
       <div className="h-full flex items-center justify-center">
-        <a href="/login" className="text-blue-600 underline">Go to login</a>
+        <a href="/login" className="text-gold-deep underline">Go to login</a>
       </div>
     );
   }
@@ -37,7 +37,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="h-full flex">
       <Sidebar />
-      <main className="flex-1 overflow-auto bg-gray-50 p-6">
+      <main className="flex-1 overflow-auto bg-paper p-8">
         {children}
       </main>
     </div>

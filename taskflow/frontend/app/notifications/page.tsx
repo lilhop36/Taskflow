@@ -7,7 +7,16 @@ import api from '@/lib/api';
 interface Notification {
   _id: string; type: string; message: string; read: boolean; createdAt: string;
   task?: { _id: string; title: string };
+  comment?: string;
 }
+
+/** Short human label for each alert type. */
+const TYPE_LABEL: Record<string, string> = {
+  CommentCreated: 'Comment',
+  TaskAssigned: 'Assigned',
+  TaskStatusChanged: 'Status',
+  TaskDeadlineUrgent: 'Deadline',
+};
 
 /**
  * Notification center — FR-008.4
@@ -43,33 +52,41 @@ export default function NotificationsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Notifications</h1>
+      <header className="mb-6 flex items-end justify-between">
+        <div>
+          <p className="eyebrow">Alert center</p>
+          <h1 className="page-title mt-1">Notifications</h1>
+          <span className="thread mt-3 w-14" aria-hidden="true" />
+        </div>
         {view === 'unread' && notifications.length > 0 && (
-          <button onClick={markAllRead} className="text-sm text-blue-600 hover:underline">
+          <button onClick={markAllRead} className="btn-ghost">
             Mark all as read
           </button>
         )}
-      </div>
+      </header>
 
       {/* Unread / History toggle */}
-      <div className="flex gap-1 mb-4 bg-gray-100 rounded-lg p-1 w-fit">
+      <div className="mb-6 flex gap-1 rounded-lg border border-black/10 bg-card p-1 w-fit">
         <button
           onClick={() => setView('unread')}
-          className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+          className={`rounded-md px-3.5 py-1.5 text-sm font-medium transition-colors ${
             view === 'unread'
-              ? 'bg-white text-gray-900 shadow'
-              : 'text-gray-500 hover:text-gray-700'
+              ? 'bg-ink text-card'
+              : 'text-sage hover:text-ink'
           }`}
         >
-          Unread {unreadCount > 0 && <span className="ml-1 text-xs text-blue-600 font-semibold">({unreadCount})</span>}
+          Unread {unreadCount > 0 && (
+            <span className={`ml-1 font-mono text-xs ${view === 'unread' ? 'text-gold' : 'text-gold-deep'}`}>
+              ({unreadCount})
+            </span>
+          )}
         </button>
         <button
           onClick={() => setView('history')}
-          className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+          className={`rounded-md px-3.5 py-1.5 text-sm font-medium transition-colors ${
             view === 'history'
-              ? 'bg-white text-gray-900 shadow'
-              : 'text-gray-500 hover:text-gray-700'
+              ? 'bg-ink text-card'
+              : 'text-sage hover:text-ink'
           }`}
         >
           History
@@ -78,29 +95,45 @@ export default function NotificationsPage() {
 
       <div className="space-y-2">
         {notifications.map((n) => (
-          <div key={n._id} className={`flex items-start justify-between bg-white rounded-lg shadow px-4 py-3 ${n.read ? 'opacity-60' : ''}`}>
-            <div className="flex-1">
-              <p className="text-sm">{n.message}</p>
-              <p className="text-xs text-gray-400 mt-1">
-                {n.type} · {new Date(n.createdAt).toLocaleString()}
+          <div
+            key={n._id}
+            className={`card relative flex items-start justify-between px-5 py-4 ${
+              n.read ? 'opacity-60' : 'border-gold/40'
+            }`}
+          >
+            {!n.read && (
+              <span className="absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-full bg-gold" aria-hidden="true" />
+            )}
+            <div className="flex-1 min-w-0">
+              <p className={`text-sm leading-relaxed ${n.read ? 'text-sage' : 'text-ink'}`}>{n.message}</p>
+              <p className="mt-1.5 font-mono text-[11px] text-sage">
+                <span className="text-gold-deep">{TYPE_LABEL[n.type] ?? n.type}</span>
+                {' · '}{new Date(n.createdAt).toLocaleString()}
                 {n.task && /^[a-fA-F0-9]{24}$/.test(n.task._id) && (
-                  <> · <Link href={`/tasks/${n.task._id}`} className="text-blue-600 hover:underline">{n.task.title}</Link></>
+                  <> ·{' '}
+                    <Link
+                      href={`/tasks/${n.task._id}${n.comment ? `#comment-${n.comment}` : ''}`}
+                      className="text-gold-deep underline-offset-2 hover:underline"
+                    >
+                      {n.task.title}
+                    </Link>
+                  </>
                 )}
               </p>
             </div>
             {!n.read && view === 'unread' && (
-              <button onClick={() => markRead(n._id)} className="text-xs text-blue-600 hover:underline ml-4">
+              <button onClick={() => markRead(n._id)} className="ml-4 shrink-0 text-xs font-semibold text-gold-deep hover:underline">
                 Dismiss
               </button>
             )}
             {n.read && view === 'history' && (
-              <span className="text-xs text-gray-300 ml-4 shrink-0">read</span>
+              <span className="ml-4 shrink-0 font-mono text-[10px] uppercase tracking-[0.12em] text-sand">read</span>
             )}
           </div>
         ))}
         {notifications.length === 0 && (
-          <p className="text-sm text-gray-400">
-            {view === 'unread' ? 'No unread notifications.' : 'No notification history yet.'}
+          <p className="card px-5 py-10 text-center text-sm text-sage">
+            {view === 'unread' ? 'No unread notifications. The flow is quiet.' : 'No notification history yet.'}
           </p>
         )}
       </div>

@@ -80,8 +80,9 @@ export default function NewProjectPage() {
   if (!isPM) {
     return (
       <div>
-        <h1 className="text-2xl font-bold mb-4">New Project</h1>
-        <p className="text-sm text-gray-500">
+        <p className="eyebrow">Create</p>
+        <h1 className="page-title mt-1">New Project</h1>
+        <p className="mt-4 text-sm text-sage">
           Only Project Managers and Administrators can create projects.
         </p>
       </div>
@@ -90,18 +91,22 @@ export default function NewProjectPage() {
 
   return (
     <div className="max-w-2xl">
-      <Link href="/projects" className="text-sm text-blue-600 hover:underline">
+      <Link href="/projects" className="text-sm text-gold-deep hover:underline">
         &larr; Back to projects
       </Link>
-      <h1 className="text-2xl font-bold my-4">New Project</h1>
+      <header className="my-4">
+        <p className="eyebrow">Create</p>
+        <h1 className="page-title mt-1">New Project</h1>
+        <span className="thread mt-3 w-14" aria-hidden="true" />
+      </header>
 
       {error && (
-        <p className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">
+        <p className="mb-4 text-sm text-ember bg-ember-soft border border-ember/30 rounded-md px-3 py-2">
           {error}
         </p>
       )}
 
-      <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow space-y-4">
+      <form onSubmit={handleSubmit} className="card p-6 space-y-4">
         <div>
           <label className="block text-sm font-medium mb-1">Project Name</label>
           <input
@@ -109,7 +114,7 @@ export default function NewProjectPage() {
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full border rounded px-3 py-2 text-sm"
+            className="input"
             placeholder="e.g. Mobile App Launch"
           />
         </div>
@@ -121,7 +126,7 @@ export default function NewProjectPage() {
             rows={3}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="w-full border rounded px-3 py-2 text-sm"
+            className="input"
             placeholder="What is this project about?"
           />
         </div>
@@ -134,7 +139,7 @@ export default function NewProjectPage() {
               required
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="w-full border rounded px-3 py-2 text-sm"
+              className="input"
             />
           </div>
           <div>
@@ -144,12 +149,12 @@ export default function NewProjectPage() {
               required
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="w-full border rounded px-3 py-2 text-sm"
+              className="input"
             />
           </div>
         </div>
         {endDate < startDate && (
-          <p className="text-xs text-red-600">
+          <p className="text-xs text-ember">
             End date must be on or after the start date (BR-006).
           </p>
         )}
@@ -157,13 +162,13 @@ export default function NewProjectPage() {
         <div>
           <label className="block text-sm font-medium mb-1">
             Project Owner{' '}
-            <span className="text-xs text-gray-400">(Project Manager — BR-008)</span>
+            <span className="text-xs text-sage">(Project Manager — BR-008)</span>
           </label>
           <select
             required
             value={ownerId}
             onChange={(e) => setOwnerId(e.target.value)}
-            className="w-full border rounded px-3 py-2 text-sm"
+            className="input"
           >
             <option value="">Select a Project Manager…</option>
             {managers.map((m) => (
@@ -173,7 +178,7 @@ export default function NewProjectPage() {
             ))}
           </select>
           {managers.length === 0 && (
-            <p className="text-xs text-gray-400 mt-1">
+            <p className="text-xs text-sage mt-1">
               No active Project Managers found — create a PM user first.
             </p>
           )}
@@ -183,7 +188,7 @@ export default function NewProjectPage() {
           <button
             type="submit"
             disabled={submitting || endDate < startDate}
-            className="bg-blue-600 text-white px-6 py-2 rounded text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+            className="btn-gold"
           >
             {submitting ? 'Creating…' : 'Create Project'}
           </button>

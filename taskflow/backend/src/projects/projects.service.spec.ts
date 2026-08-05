@@ -1,7 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ProjectsService } from './projects.service';
 import { ProjectsRepository } from './projects.repository';
+import { VisibilityPolicyService } from './visibility-policy.service';
 import { UsersService } from '../users/users.service';
 import { UserRole } from '../users/schemas/user.schema';
 import { ProjectStatus } from './schemas/project.schema';
@@ -44,26 +49,38 @@ describe('ProjectsService', () => {
     status: 'Active',
   } as any;
 
+  // Shared repository mock — the real VisibilityPolicyService is wired on
+  // top of it so the BR-001 role logic is exercised, not mocked away.
+  const repositoryMock = {
+    create: jest.fn(),
+    findAll: jest.fn(),
+    findById: jest.fn(),
+    findByMember: jest.fn(),
+    update: jest.fn(),
+    archive: jest.fn(),
+    countActiveTasks: jest.fn(),
+    isUserMemberOfProject: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ProjectsService,
         {
           provide: ProjectsRepository,
-          useValue: {
-            create: jest.fn(),
-            findAll: jest.fn(),
-            findById: jest.fn(),
-            update: jest.fn(),
-            archive: jest.fn(),
-            countActiveTasks: jest.fn(),
-          },
+          useValue: repositoryMock,
         },
         {
           provide: UsersService,
           useValue: {
             findById: jest.fn(),
           },
+        },
+        {
+          provide: VisibilityPolicyService,
+          useValue: new VisibilityPolicyService(
+            repositoryMock as unknown as ProjectsRepository,
+          ),
         },
       ],
     }).compile();
@@ -96,6 +113,54 @@ describe('ProjectsService', () => {
     });
   });
 
+  // ─── findAllForUser() — membership scoping ────────────────────────────────
+
+  describe('findAllForUser()', () => {
+    const teamMember = {
+      _id: { toString: () => 'member-id' },
+      role: UserRole.TEAM_MEMBER,
+    } as any;
+    const pm = {
+      _id: { toString: () => 'pm-id' },
+      role: UserRole.PROJECT_MANAGER,
+    } as any;
+    const admin = {
+      _id: { toString: () => 'admin-id' },
+      role: UserRole.ADMIN,
+    } as any;
+
+    it('Team Member sees only projects they own or belong to', async () => {
+      repository.findByMember.mockResolvedValue([mockProject]);
+
+      const result = await service.findAllForUser(teamMember);
+
+      expect(repository.findByMember).toHaveBeenCalledWith('member-id');
+      expect(repository.findAll).not.toHaveBeenCalled();
+      expect(result).toHaveLength(1);
+    });
+
+    it('PM/Admin sees all projects without scoping (BR-001)', async () => {
+      repository.findAll.mockResolvedValue([mockProject]);
+
+      const result = await service.findAllForUser(pm);
+
+      expect(repository.findAll).toHaveBeenCalled();
+      expect(repository.findByMember).not.toHaveBeenCalled();
+      expect(result).toHaveLength(1);
+
+      repository.findAll.mockClear();
+      await service.findAllForUser(admin);
+      expect(repository.findAll).toHaveBeenCalled();
+    });
+
+    it('missing user fails closed', async () => {
+      await expect(service.findAllForUser(undefined)).rejects.toThrow(
+        UnauthorizedException,
+      );
+      expect(repository.findAll).not.toHaveBeenCalled();
+    });
+  });
+
   // ─── archive() — BR-003 ───────────────────────────────────────────────────
 
   describe('archive()', () => {
@@ -106,7 +171,7 @@ describe('ProjectsService', () => {
         ...mockProject,
         status: ProjectStatus.ARCHIVED,
         toObject: () => ({ status: ProjectStatus.ARCHIVED }),
-      } as any);
+      });
 
       const result = await service.archive('project-id-123');
 
@@ -178,7 +243,11 @@ describe('ProjectsService', () => {
 
     it('should throw BadRequestException when endDate is before startDate (BR-006)', async () => {
       await expect(
-        service.create({ ...validDto, startDate: '2024-12-31', endDate: '2024-01-01' }),
+        service.create({
+          ...validDto,
+          startDate: '2024-12-31',
+          endDate: '2024-01-01',
+        }),
       ).rejects.toThrow(BadRequestException);
       expect(repository.create).not.toHaveBeenCalled();
     });
@@ -196,7 +265,9 @@ describe('ProjectsService', () => {
         role: UserRole.TEAM_MEMBER,
       });
 
-      await expect(service.create(validDto)).rejects.toThrow(BadRequestException);
+      await expect(service.create(validDto)).rejects.toThrow(
+        BadRequestException,
+      );
       expect(repository.create).not.toHaveBeenCalled();
     });
   });

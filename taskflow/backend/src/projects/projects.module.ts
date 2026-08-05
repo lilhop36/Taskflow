@@ -5,6 +5,7 @@ import { Task, TaskSchema } from '../tasks/schemas/task.schema';
 import { ProjectsController } from './projects.controller';
 import { ProjectsRepository } from './projects.repository';
 import { ProjectsService } from './projects.service';
+import { VisibilityPolicyService } from './visibility-policy.service';
 import { Project, ProjectSchema } from './schemas/project.schema';
 
 @Module({
@@ -20,7 +21,7 @@ import { Project, ProjectSchema } from './schemas/project.schema';
     ]),
   ],
   controllers: [ProjectsController],
-  providers: [ProjectsService, ProjectsRepository],
-  exports: [ProjectsService, ProjectsRepository],
+  providers: [ProjectsService, ProjectsRepository, VisibilityPolicyService],
+  exports: [ProjectsService, ProjectsRepository, VisibilityPolicyService],
 })
 export class ProjectsModule {}

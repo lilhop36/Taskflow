@@ -19,6 +19,7 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { Task } from '../common/decorators/task.decorator';
 import { ParseMongoIdPipe } from '../common/pipes/parse-mongo-id.pipe';
 import { ProjectMemberGuard } from '../common/guards/project-member.guard';
+import { UserRole } from '../users/schemas/user.schema';
 
 /**
  * Controller for task comment endpoints.
@@ -36,9 +37,7 @@ import { ProjectMemberGuard } from '../common/guards/project-member.guard';
 @Controller('tasks/:taskId/comments')
 @UseGuards(ProjectMemberGuard)
 export class CommentsController {
-  constructor(
-    private readonly commentsService: CommentsService,
-  ) {}
+  constructor(private readonly commentsService: CommentsService) {}
 
   /**
    * FR-007.2: Post a comment on a task.
@@ -52,9 +51,20 @@ export class CommentsController {
   async create(
     @Param('taskId', ParseMongoIdPipe) taskId: string,
     @Body() createCommentDto: CreateCommentDto,
-    @CurrentUser('_id') userId: string,
+    @CurrentUser() user: {
+      _id: { toString(): string };
+      firstName?: string;
+      lastName?: string;
+    },
   ) {
-    return this.commentsService.create(createCommentDto, taskId, userId);
+    return this.commentsService.create(
+      createCommentDto,
+      taskId,
+      user._id.toString(),
+      user.firstName && user.lastName
+        ? `${user.firstName} ${user.lastName}`
+        : undefined,
+    );
   }
 
   /**
@@ -70,7 +80,7 @@ export class CommentsController {
 
   /**
    * FR-007.2 (extended): Update a comment on a task.
-   * Only the author of the comment or a project member can update.
+   * BR-005: only the comment's author (or a PM/Admin moderator) can update.
    * Exposes PATCH /api/tasks/:taskId/comments/:commentId
    */
   @Patch(':commentId')
@@ -80,7 +90,7 @@ export class CommentsController {
     @Param('commentId', ParseMongoIdPipe) commentId: string,
     @Body() updateCommentDto: UpdateCommentDto,
     @Task() task: any,
-    @CurrentUser('_id') userId: string,
+    @CurrentUser() user: { _id: { toString(): string }; role?: UserRole },
   ) {
     // Verify the comment exists and belongs to the task
     const comment = await this.commentsService.findCommentById(commentId);
@@ -96,13 +106,16 @@ export class CommentsController {
     return this.commentsService.updateComment(
       commentId,
       updateCommentDto.content,
-      userId,
+      {
+        id: user._id.toString(),
+        role: user.role,
+      },
     );
   }
 
   /**
    * FR-007.2 (extended): Delete a comment on a task.
-   * Only the author of the comment or a project member can delete.
+   * BR-005: only the comment's author (or a PM/Admin moderator) can delete.
    * Exposes DELETE /api/tasks/:taskId/comments/:commentId
    */
   @Delete(':commentId')
@@ -111,7 +124,7 @@ export class CommentsController {
     @Param('taskId', ParseMongoIdPipe) taskId: string,
     @Param('commentId', ParseMongoIdPipe) commentId: string,
     @Task() task: any,
-    @CurrentUser('_id') userId: string,
+    @CurrentUser() user: { _id: { toString(): string }; role?: UserRole },
   ) {
     // Verify the comment exists and belongs to the task
     const comment = await this.commentsService.findCommentById(commentId);
@@ -124,6 +137,9 @@ export class CommentsController {
       );
     }
 
-    return this.commentsService.deleteComment(commentId, userId);
+    return this.commentsService.deleteComment(commentId, {
+      id: user._id.toString(),
+      role: user.role,
+    });
   }
 }

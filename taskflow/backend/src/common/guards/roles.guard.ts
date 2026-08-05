@@ -60,7 +60,11 @@ export class RolesGuard implements CanActivate {
     // request.user is populated by JwtStrategy.validate() during JwtAuthGuard.
     // Its shape: { userId: string, email: string, role: UserRole }
     const request = context.switchToHttp().getRequest();
-    const user = request.user as { userId: string; email: string; role: UserRole };
+    const user = request.user as {
+      userId: string;
+      email: string;
+      role: UserRole;
+    };
 
     // Step 4: Check if the user's role satisfies the required roles.
     // BR-001: Role hierarchy — Administrator > ProjectManager > TeamMember.
@@ -73,7 +77,10 @@ export class RolesGuard implements CanActivate {
 
     const hasRole = requiredRoles.some((role) => {
       if (role === UserRole.TEAM_MEMBER) {
-        return user?.role === UserRole.TEAM_MEMBER || user?.role === UserRole.PROJECT_MANAGER;
+        return (
+          user?.role === UserRole.TEAM_MEMBER ||
+          user?.role === UserRole.PROJECT_MANAGER
+        );
       }
       if (role === UserRole.PROJECT_MANAGER) {
         return user?.role === UserRole.PROJECT_MANAGER;

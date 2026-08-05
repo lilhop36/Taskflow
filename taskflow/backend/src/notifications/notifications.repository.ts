@@ -1,7 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
-import { Notification, NotificationDocument } from './schemas/notification.schema';
+import {
+  CreateNotificationInput,
+  Notification,
+  NotificationDocument,
+} from './schemas/notification.schema';
 
 /**
  * Repository for Notification documents.
@@ -16,11 +20,25 @@ export class NotificationsRepository {
   ) {}
 
   /**
-   * Persist a new notification record.
-   * Used by the NotificationListener when events are fired.
+   * Persist a new notification record from the shared notification
+   * contract ({@link CreateNotificationInput}). This is the persistence
+   * seam: hex-string ids arrive from the event layer and are converted to
+   * ObjectIds here — callers never cast strings into the schema's ObjectId
+   * fields.
    */
-  async create(data: Partial<Notification>): Promise<NotificationDocument> {
-    const notification = new this.notificationModel(data);
+  async create(input: CreateNotificationInput): Promise<NotificationDocument> {
+    const notification = new this.notificationModel({
+      recipient: new Types.ObjectId(input.recipient),
+      type: input.type,
+      message: input.message,
+      ...(input.task ? { task: new Types.ObjectId(input.task) } : {}),
+      ...(input.comment ? { comment: new Types.ObjectId(input.comment) } : {}),
+      // sender is optional attribution: the events are the typed source —
+      // they carry a real user id when a human actor is known and omit the
+      // field entirely otherwise (system-generated). The repository simply
+      // stores what it is given; no sentinel guessing.
+      ...(input.sender ? { sender: new Types.ObjectId(input.sender) } : {}),
+    });
     return notification.save();
   }
 

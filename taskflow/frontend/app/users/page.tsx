@@ -93,105 +93,107 @@ export default function UsersPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Users (FR-002)</h1>
+      <header className="mb-6 flex items-end justify-between">
+        <div>
+          <p className="eyebrow">Directory</p>
+          <h1 className="page-title mt-1">Users</h1>
+          <span className="thread mt-3 w-14" aria-hidden="true" />
+        </div>
         {isAdmin && (
           <button
             onClick={() => setShowForm((v) => !v)}
-            className="bg-blue-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-blue-700"
+            className={showForm ? 'btn-ghost' : 'btn-gold'}
           >
-            {showForm ? 'Cancel' : 'New User'}
+            {showForm ? 'Cancel' : 'New user'}
           </button>
         )}
-      </div>
+      </header>
 
       {error && (
-        <p className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">{error}</p>
+        <p className="mb-4 text-sm text-ember bg-ember-soft border border-ember/30 rounded-md px-3 py-2">{error}</p>
       )}
 
       {showForm && (
-        <form onSubmit={handleCreate} className="bg-white p-6 rounded-lg shadow mb-6 space-y-4 max-w-md">
+        <form onSubmit={handleCreate} className="card p-6 mb-6 space-y-4 max-w-md">
           <div className="flex gap-4">
             <div className="flex-1">
               <label className="block text-sm font-medium mb-1">First Name</label>
-              <input type="text" required value={firstName} onChange={(e) => setFirstName(e.target.value)} className="w-full border rounded px-3 py-2 text-sm" />
+              <input type="text" required value={firstName} onChange={(e) => setFirstName(e.target.value)} className="input" />
             </div>
             <div className="flex-1">
               <label className="block text-sm font-medium mb-1">Last Name</label>
-              <input type="text" required value={lastName} onChange={(e) => setLastName(e.target.value)} className="w-full border rounded px-3 py-2 text-sm" />
+              <input type="text" required value={lastName} onChange={(e) => setLastName(e.target.value)} className="input" />
             </div>
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Email</label>
-            <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="w-full border rounded px-3 py-2 text-sm" />
+            <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="input" />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Password</label>
-            <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="w-full border rounded px-3 py-2 text-sm" />
+            <input type="password" required value={password} onChange={(e) => setPassword(e.target.value)} className="input" />
           </div>
           <div>
             <label className="block text-sm font-medium mb-1">Role</label>
-            <select value={role} onChange={(e) => setRole(e.target.value)} className="w-full border rounded px-3 py-2 text-sm">
+            <select value={role} onChange={(e) => setRole(e.target.value)} className="input">
               <option value="TeamMember">Team Member</option>
               <option value="ProjectManager">Project Manager</option>
               <option value="Administrator">Administrator</option>
             </select>
           </div>
-          <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-green-700">
-            Create User
-          </button>
+          <button type="submit" className="btn-gold">Create user</button>
         </form>
       )}
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="card overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50 text-left">
+          <thead className="border-b border-black/5 bg-black/[0.02] text-left">
             <tr>
-              <th className="px-4 py-3 font-medium">Name</th>
-              <th className="px-4 py-3 font-medium">Email</th>
-              <th className="px-4 py-3 font-medium">Role</th>
-              <th className="px-4 py-3 font-medium">Status</th>
-              {isAdmin && <th className="px-4 py-3 font-medium">Actions</th>}
+              <th className="px-5 py-3 font-mono text-[10px] uppercase tracking-[0.14em] text-sage">Name</th>
+              <th className="px-5 py-3 font-mono text-[10px] uppercase tracking-[0.14em] text-sage">Email</th>
+              <th className="px-5 py-3 font-mono text-[10px] uppercase tracking-[0.14em] text-sage">Role</th>
+              <th className="px-5 py-3 font-mono text-[10px] uppercase tracking-[0.14em] text-sage">Status</th>
+              {isAdmin && <th className="px-5 py-3 font-mono text-[10px] uppercase tracking-[0.14em] text-sage">Actions</th>}
             </tr>
           </thead>
-          <tbody className="divide-y">
+          <tbody className="divide-y divide-black/5">
             {users.map((u) =>
               editingId === u._id ? (
                 // Inline edit row — replaces the user's row while editing
-                <tr key={u._id} className="bg-blue-50/50">
-                  <td colSpan={isAdmin ? 5 : 4} className="px-4 py-3">
+                <tr key={u._id} className="bg-gold-soft/40">
+                  <td colSpan={isAdmin ? 5 : 4} className="px-5 py-3">
                     <div className="flex flex-wrap items-end gap-3">
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">First</label>
+                        <label className="block text-xs font-medium text-sage mb-1">First</label>
                         <input
                           value={editFirstName}
                           onChange={(e) => setEditFirstName(e.target.value)}
-                          className="border rounded px-2 py-1.5 text-sm"
+                          className="input w-32"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Last</label>
+                        <label className="block text-xs font-medium text-sage mb-1">Last</label>
                         <input
                           value={editLastName}
                           onChange={(e) => setEditLastName(e.target.value)}
-                          className="border rounded px-2 py-1.5 text-sm"
+                          className="input w-32"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Email</label>
+                        <label className="block text-xs font-medium text-sage mb-1">Email</label>
                         <input
                           type="email"
                           value={editEmail}
                           onChange={(e) => setEditEmail(e.target.value)}
-                          className="border rounded px-2 py-1.5 text-sm"
+                          className="input w-44"
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Role</label>
+                        <label className="block text-xs font-medium text-sage mb-1">Role</label>
                         <select
                           value={editRole}
                           onChange={(e) => setEditRole(e.target.value)}
-                          className="border rounded px-2 py-1.5 text-sm"
+                          className="input w-40"
                         >
                           <option value="TeamMember">Team Member</option>
                           <option value="ProjectManager">Project Manager</option>
@@ -201,13 +203,13 @@ export default function UsersPage() {
                       <button
                         onClick={saveEdit}
                         disabled={savingEdit}
-                        className="px-3 py-1.5 rounded text-xs bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
+                        className="rounded-md bg-teal px-3 py-1.5 text-xs font-semibold text-white hover:bg-teal/90 disabled:opacity-50"
                       >
                         {savingEdit ? 'Saving…' : 'Save'}
                       </button>
                       <button
                         onClick={() => setEditingId('')}
-                        className="px-3 py-1.5 rounded text-xs bg-gray-200 text-gray-700 hover:bg-gray-300"
+                        className="btn-ghost px-3 py-1.5 text-xs"
                       >
                         Cancel
                       </button>
@@ -215,25 +217,25 @@ export default function UsersPage() {
                   </td>
                 </tr>
               ) : (
-                <tr key={u._id} className="hover:bg-gray-50">
-                  <td className="px-4 py-3">{u.firstName} {u.lastName}</td>
-                  <td className="px-4 py-3 text-gray-500">{u.email}</td>
-                  <td className={`px-4 py-3 font-medium ${roleColor(u.role)}`}>{u.role}</td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2 py-0.5 rounded-full text-xs ${userStatusBadge(u.status)}`}>
+                <tr key={u._id} className="hover:bg-black/[0.015] transition-colors">
+                  <td className="px-5 py-3 font-medium text-ink">{u.firstName} {u.lastName}</td>
+                  <td className="px-5 py-3 font-mono text-xs text-sage">{u.email}</td>
+                  <td className={`px-5 py-3 font-semibold ${roleColor(u.role)}`}>{u.role}</td>
+                  <td className="px-5 py-3">
+                    <span className={`rounded-full px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.08em] ${userStatusBadge(u.status)}`}>
                       {u.status}
                     </span>
                   </td>
                   {isAdmin && (
-                    <td className="px-4 py-3">
+                    <td className="px-5 py-3">
                       <div className="flex gap-3">
                         {u.status === 'Active' && (
-                          <button onClick={() => startEdit(u)} className="text-blue-600 hover:text-blue-800 text-xs font-medium">
+                          <button onClick={() => startEdit(u)} className="text-xs font-semibold text-teal hover:underline">
                             Edit
                           </button>
                         )}
                         {u.status === 'Active' && u._id !== user?._id && (
-                          <button onClick={() => handleDeactivate(u._id)} className="text-red-600 hover:text-red-800 text-xs font-medium">
+                          <button onClick={() => handleDeactivate(u._id)} className="text-xs font-semibold text-ember hover:underline">
                             Deactivate
                           </button>
                         )}

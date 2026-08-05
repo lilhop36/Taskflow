@@ -111,20 +111,24 @@ export default function TeamsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Teams (FR-003)</h1>
+      <header className="mb-6 flex items-end justify-between">
+        <div>
+          <p className="eyebrow">Org structure</p>
+          <h1 className="page-title mt-1">Teams</h1>
+          <span className="thread mt-3 w-14" aria-hidden="true" />
+        </div>
         {isAdmin && (
           <button
             onClick={() => setShowForm((v) => !v)}
-            className="bg-blue-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-blue-700"
+            className={showForm ? 'btn-ghost' : 'btn-gold'}
           >
-            {showForm ? 'Cancel' : 'New Team'}
+            {showForm ? 'Cancel' : 'New team'}
           </button>
         )}
-      </div>
+      </header>
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow mb-6 space-y-4">
+        <form onSubmit={handleSubmit} className="card p-6 mb-6 space-y-4 max-w-lg">
           <div>
             <label className="block text-sm font-medium mb-1">Team Name</label>
             <input
@@ -132,7 +136,7 @@ export default function TeamsPage() {
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full border rounded px-3 py-2 text-sm"
+              className="input"
             />
           </div>
           <div>
@@ -141,45 +145,43 @@ export default function TeamsPage() {
               required
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full border rounded px-3 py-2 text-sm"
+              className="input"
               rows={2}
             />
           </div>
-          <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded text-sm font-medium hover:bg-green-700">
-            Create Team
-          </button>
+          <button type="submit" className="btn-gold">Create team</button>
         </form>
       )}
 
       <div className="grid gap-4">
         {teams.map((team) => (
-          <div key={team._id} className="bg-white rounded-lg shadow p-5">
+          <div key={team._id} className="card p-5">
             <div className="flex items-start justify-between">
-              <div>
+              <div className="min-w-0">
                 {editingId === team._id ? (
                   <div className="space-y-2">
                     <input
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
-                      className="border rounded px-3 py-1.5 text-sm w-full"
+                      className="input"
                     />
                     <textarea
                       value={editDescription}
                       onChange={(e) => setEditDescription(e.target.value)}
                       rows={2}
-                      className="border rounded px-3 py-1.5 text-sm w-full"
+                      className="input"
                     />
                     <div className="flex gap-2">
                       <button
                         onClick={saveEdit}
                         disabled={busy === team._id}
-                        className="px-3 py-1 rounded text-xs bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
+                        className="rounded-md bg-teal px-3 py-1.5 text-xs font-semibold text-white hover:bg-teal/90 disabled:opacity-50"
                       >
                         {busy === team._id ? 'Saving…' : 'Save'}
                       </button>
                       <button
                         onClick={() => setEditingId('')}
-                        className="px-3 py-1 rounded text-xs bg-gray-200 text-gray-700 hover:bg-gray-300"
+                        className="btn-ghost px-3 py-1.5 text-xs"
                       >
                         Cancel
                       </button>
@@ -187,44 +189,44 @@ export default function TeamsPage() {
                   </div>
                 ) : (
                   <>
-                    <h2 className="text-lg font-semibold">{team.name}</h2>
-                    <p className="text-sm text-gray-500 mt-1">{team.description}</p>
+                    <h2 className="font-display text-xl font-semibold tracking-tight text-ink">{team.name}</h2>
+                    <p className="mt-1 text-sm text-sage">{team.description}</p>
                   </>
                 )}
               </div>
               {isAdmin && editingId !== team._id && (
-                <div className="flex gap-2 text-xs shrink-0">
+                <div className="flex gap-3 text-xs shrink-0">
                   <button
                     onClick={() => startEdit(team)}
-                    className="text-blue-600 hover:underline"
+                    className="font-semibold text-teal hover:underline"
                   >
                     Edit
                   </button>
                   <button
                     onClick={() => deleteTeam(team._id, team.name)}
                     disabled={busy === team._id}
-                    className="text-red-600 hover:underline disabled:opacity-50"
+                    className="font-semibold text-ember hover:underline disabled:opacity-50"
                   >
                     {busy === team._id ? '…' : 'Delete'}
                   </button>
                 </div>
               )}
             </div>
-            <div className="mt-3">
-              <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+            <div className="mt-4 border-t border-black/5 pt-4">
+              <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-sage">
                 Members ({team.members.length})
               </span>
               <ul className="mt-2 text-sm space-y-1">
                 {team.members.map((m) => (
-                  <li key={m._id} className="text-gray-700 flex items-center justify-between group">
+                  <li key={m._id} className="text-ink flex items-center justify-between group">
                     <span>
-                      {m.firstName} {m.lastName} <span className="text-gray-400">({m.email})</span>
+                      {m.firstName} {m.lastName} <span className="font-mono text-xs text-sand">({m.email})</span>
                     </span>
                     {isAdmin && (
                       <button
                         onClick={() => removeMember(team._id, m._id)}
                         disabled={busy === `${team._id}:${m._id}`}
-                        className="text-xs text-red-500 hover:text-red-700 hover:underline disabled:opacity-50 opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="text-xs font-semibold text-ember hover:underline disabled:opacity-50 opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         {busy === `${team._id}:${m._id}` ? '…' : 'Remove'}
                       </button>
@@ -232,13 +234,13 @@ export default function TeamsPage() {
                   </li>
                 ))}
                 {team.members.length === 0 && (
-                  <li className="text-gray-400 italic">No members yet</li>
+                  <li className="text-sand italic">No members yet</li>
                 )}
               </ul>
               {isAdmin && (
                 <div className="mt-3 flex gap-2">
                   <select
-                    className="border rounded px-2 py-1 text-xs"
+                    className="input w-48 py-1.5 text-xs"
                     onChange={async (e) => {
                       if (!e.target.value) return;
                       await api.post(`/teams/${team._id}/members`, { userIds: [e.target.value] });
@@ -261,10 +263,12 @@ export default function TeamsPage() {
           </div>
         ))}
         {teams.length === 0 && (
-          <p className="text-gray-400 italic">No teams defined yet.</p>
+          <p className="card px-5 py-10 text-center text-sm text-sage">
+            No teams defined yet.
+          </p>
         )}
         {actionError && (
-          <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">{actionError}</p>
+          <p className="text-sm text-ember bg-ember-soft border border-ember/30 rounded-md px-3 py-2">{actionError}</p>
         )}
       </div>
     </div>

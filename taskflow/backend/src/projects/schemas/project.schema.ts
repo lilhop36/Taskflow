@@ -1,7 +1,19 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, SchemaTypes, Types } from 'mongoose';
+import { refId } from '../../common/ref-id';
 
-export type ProjectDocument = HydratedDocument<Project>;
+/**
+ * Stable ref-id surface on Project documents (populated or raw ObjectId).
+ * `ownerId` / `memberIds` resolve the owner and members refs to id strings
+ * regardless of whether the repository populated them — the seam that fixes
+ * the runtime `toString()`-on-populated-doc bug.
+ */
+export interface ProjectDocumentRefs {
+  ownerId: string | null;
+  memberIds: string[];
+}
+
+export type ProjectDocument = HydratedDocument<Project> & ProjectDocumentRefs;
 
 export enum ProjectStatus {
   ACTIVE = 'Active',
@@ -36,3 +48,13 @@ export class Project {
 }
 
 export const ProjectSchema = SchemaFactory.createForClass(Project);
+
+ProjectSchema.virtual('ownerId').get(function (this: ProjectDocument) {
+  return refId(this.owner);
+});
+
+ProjectSchema.virtual('memberIds').get(function (this: ProjectDocument) {
+  return this.members
+    .map((member) => refId(member))
+    .filter((id): id is string => id !== null);
+});

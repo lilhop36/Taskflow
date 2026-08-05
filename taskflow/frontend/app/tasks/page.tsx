@@ -13,6 +13,13 @@ interface Task {
   assignee?: { _id: string; firstName: string; lastName: string };
 }
 
+/** Small colored dot for the task's lifecycle status. */
+const STATUS_DOT: Record<string, string> = {
+  'To Do': 'bg-sage',
+  'In Progress': 'bg-gold',
+  'Done': 'bg-teal',
+};
+
 export default function TasksPage() {
   const { user } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -29,48 +36,74 @@ export default function TasksPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold">Tasks</h1>
+      <header className="mb-6 flex items-end justify-between">
+        <div>
+          <p className="eyebrow">Task register</p>
+          <h1 className="page-title mt-1">Tasks</h1>
+          <span className="thread mt-3 w-14" aria-hidden="true" />
+        </div>
         {isPM && (
-          <Link href="/tasks/new" className="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">
-            + New Task
+          <Link href="/tasks/new" className="btn-gold">
+            + New task
           </Link>
         )}
-      </div>
+      </header>
 
-      <div className="mb-4 flex items-center gap-3 flex-wrap">
-        <div className="flex gap-2">
+      <div className="mb-6 flex items-center gap-4 flex-wrap">
+        <div className="flex gap-1.5">
           {['', 'To Do', 'In Progress', 'Done'].map((s) => (
-            <button key={s} onClick={() => setFilter(s)}
-              className={`px-3 py-1 rounded text-sm border ${filter === s ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300'}`}>
+            <button
+              key={s}
+              onClick={() => setFilter(s)}
+              className={`rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors ${
+                filter === s
+                  ? 'bg-ink text-card'
+                  : 'bg-card text-sage border border-black/10 hover:border-gold hover:text-ink'
+              }`}
+            >
               {s || 'All'}
             </button>
           ))}
         </div>
-        <label className="flex items-center gap-1.5 text-sm text-gray-600 cursor-pointer">
-          <input type="checkbox" checked={myTasksOnly} onChange={(e) => setMyTasksOnly(e.target.checked)} />
+        <label className="flex items-center gap-2 text-sm text-sage cursor-pointer">
+          <input
+            type="checkbox"
+            checked={myTasksOnly}
+            onChange={(e) => setMyTasksOnly(e.target.checked)}
+            className="h-4 w-4 rounded border-black/20 accent-gold"
+          />
           My tasks only
         </label>
       </div>
 
       <div className="space-y-2">
         {filtered.map((t) => (
-          <Link key={t._id} href={`/tasks/${t._id}`}
-            className="flex items-center justify-between bg-white rounded-lg shadow px-4 py-3 hover:shadow-md transition">
-            <div className="flex-1">
-              <p className="font-medium">{t.title}</p>
-              <p className="text-xs text-gray-400">
+          <Link
+            key={t._id}
+            href={`/tasks/${t._id}`}
+            className="card flex items-center justify-between px-5 py-3.5 transition-colors hover:border-gold/60"
+          >
+            <div className="flex-1 min-w-0">
+              <p className="flex items-center gap-2.5 font-medium text-ink">
+                <span className={`h-2 w-2 shrink-0 rounded-full ${STATUS_DOT[t.status] ?? 'bg-sage'}`} aria-hidden="true" />
+                <span className="truncate">{t.title}</span>
+              </p>
+              <p className="mt-0.5 pl-[1.125rem] font-mono text-[11px] text-sage">
                 {t.project?.name ?? 'N/A'} · {t.assignee ? `${t.assignee.firstName} ${t.assignee.lastName}` : 'Unassigned'}
               </p>
             </div>
-            <div className="flex items-center gap-3 text-xs">
-              <span className={priorityColor(t.priority)}>{t.priority}</span>
+            <div className="flex items-center gap-4 text-xs shrink-0">
+              <span className={`font-semibold ${priorityColor(t.priority)}`}>{t.priority}</span>
               <span className={statusColor(t.status)}>{t.status}</span>
-              <span className="text-gray-400">{formatDate(t.dueDate)}</span>
+              <span className="font-mono text-[11px] text-sage">{formatDate(t.dueDate)}</span>
             </div>
           </Link>
         ))}
-        {filtered.length === 0 && <p className="text-sm text-gray-400">No tasks match.</p>}
+        {filtered.length === 0 && (
+          <p className="card px-5 py-8 text-center text-sm text-sage">
+            No tasks match. Adjust the filters or create a new task.
+          </p>
+        )}
       </div>
     </div>
   );

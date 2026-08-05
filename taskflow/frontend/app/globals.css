@@ -1,26 +1,119 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+ * TaskFlow design system — "the warm control room".
+ *
+ * A calm instrument-panel aesthetic grounded in Ethiopian craft warmth:
+ * teff/meskel gold, deep lake teal, coffee-ink. Warm but disciplined.
+ *
+ * - ink    #191712  warm coffee-ink — shell (sidebar, login)
+ * - paper  #F5F2EA  warm paper — page background
+ * - card   #FDFBF4  surface for cards / panels
+ * - gold   #D99A2B  meskel gold — the signature accent (primary actions, ticks)
+ * - teal   #14736A  lake teal — done / success
+ * - ember  #B03A2E  brick — overdue / danger
+ * - sage   #6E6A5B  warm gray — metadata on light
+ * - sand   #A99F89  muted text on ink
+ *
+ * Type: Fraunces (display, titles only) · Manrope (UI/body) ·
+ * IBM Plex Mono (data readouts — dates, counts, metadata).
+ */
+@theme {
+  --color-ink: #191712;
+  --color-ink-soft: #242119;
+  --color-ink-line: #363229;
+  --color-paper: #f5f2ea;
+  --color-card: #fdfbf4;
+  --color-gold: #d99a2b;
+  --color-gold-deep: #b87d1a;
+  --color-gold-soft: #f3e3c0;
+  --color-teal: #14736a;
+  --color-teal-soft: #d9e8e3;
+  --color-ember: #b03a2e;
+  --color-ember-soft: #f5dfd9;
+  --color-sage: #6e6a5b;
+  --color-sand: #a99f89;
+
+  --font-sans: var(--font-manrope);
+  --font-display: var(--font-fraunces);
+  --font-mono: var(--font-plex-mono);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+@layer base {
+  body {
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+  }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  ::selection {
+    background: var(--color-gold-soft);
+    color: var(--color-ink);
+  }
+
+  /* Visible keyboard focus everywhere — gold, never removed */
+  :focus-visible {
+    outline: 2px solid var(--color-gold);
+    outline-offset: 2px;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  /* Warm surface card: hairline rule instead of a heavy shadow */
+  .card {
+    @apply bg-card rounded-lg border border-black/5 shadow-[0_1px_2px_rgba(25,23,18,0.06)];
+  }
+
+  .btn-gold {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-md bg-gold px-4 py-2 text-sm font-semibold text-ink transition-colors hover:bg-gold-deep hover:text-white disabled:opacity-50;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-md border border-black/10 px-3 py-1.5 text-sm font-medium text-sage transition-colors hover:border-gold hover:text-ink;
+  }
+
+  .btn-link {
+    @apply text-xs font-semibold text-gold-deep hover:underline;
+  }
+
+  .btn-danger-text {
+    @apply text-xs font-semibold text-ember hover:underline;
+  }
+
+  .input {
+    @apply w-full rounded-md border border-black/10 bg-white px-3 py-2 text-sm text-ink placeholder:text-sage/60 focus:border-gold;
+  }
+
+  .eyebrow {
+    @apply font-mono text-[11px] font-medium uppercase tracking-[0.14em] text-sage;
+  }
+
+  .page-title {
+    @apply font-display text-3xl font-semibold tracking-tight text-ink;
+  }
+
+  /* The gold flow-thread: the signature seam drawn under wordmarks/titles */
+  .thread {
+    @apply block h-0.5 w-full rounded-full bg-gold;
+  }
+
+  .thread-draw {
+    transform-origin: left;
+    animation: draw-thread 1.1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+}
+
+@keyframes draw-thread {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thread-draw {
+    animation: none;
+  }
 }

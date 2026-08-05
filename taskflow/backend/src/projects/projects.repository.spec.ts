@@ -72,3 +72,51 @@ describe('ProjectsRepository.isUserMemberOfProject — FR-007.2', () => {
     expect(select).toHaveBeenCalledWith('owner members');
   });
 });
+
+describe('ProjectsRepository.findIdNameForMember — dashboard dropdown', () => {
+  function makeRepo(projects: any[]) {
+    // Mock the find → select → lean → exec chain used by the method.
+    const chain = {
+      select: jest.fn(),
+      lean: jest.fn(),
+      exec: jest.fn(),
+    };
+    chain.select.mockReturnValue(chain);
+    chain.lean.mockReturnValue(chain);
+    chain.exec.mockResolvedValue(projects);
+    const find = jest.fn().mockReturnValue(chain);
+
+    const projectModel = { find } as any;
+    const taskModel = {} as any;
+    const repo = new ProjectsRepository(projectModel, taskModel);
+    return { repo, find, chain };
+  }
+
+  it('scopes to owner/member projects when a userId is given (Team Member)', async () => {
+    const { repo, find, chain } = makeRepo([]);
+
+    await repo.findIdNameForMember('user-1');
+
+    expect(find).toHaveBeenCalledWith({
+      $or: [{ owner: 'user-1' }, { members: 'user-1' }],
+    });
+    expect(chain.select).toHaveBeenCalledWith('_id name');
+  });
+
+  it('returns every project when no userId is given (Admin/PM)', async () => {
+    const { repo, find } = makeRepo([]);
+
+    await repo.findIdNameForMember();
+
+    expect(find).toHaveBeenCalledWith({});
+  });
+
+  it('returns lean id + name projections', async () => {
+    const id = new Types.ObjectId();
+    const { repo } = makeRepo([{ _id: id, name: 'Alpha' }]);
+
+    const result = await repo.findIdNameForMember();
+
+    expect(result).toEqual([{ _id: id, name: 'Alpha' }]);
+  });
+});

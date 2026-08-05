@@ -1,7 +1,18 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, SchemaTypes, Types } from 'mongoose';
+import { refId } from '../../common/ref-id';
 
-export type TaskDocument = HydratedDocument<Task>;
+/**
+ * Stable ref-id surface on Task documents (populated or raw ObjectId).
+ * `assigneeId` resolves the assignee ref to its id string regardless of
+ * whether the repository populated it — the seam that fixes the runtime
+ * `toString()`-on-populated-doc bug.
+ */
+export interface TaskDocumentRefs {
+  assigneeId: string | null;
+}
+
+export type TaskDocument = HydratedDocument<Task> & TaskDocumentRefs;
 
 export enum TaskStatus {
   TODO = 'To Do',
@@ -49,6 +60,20 @@ export class Task {
    */
   @Prop({ type: Date })
   completedAt?: Date | null;
+
+  /**
+   * Set when a "deadline urgent" notification has been emitted for this
+   * task (FR-008.3). Acts as a dedup flag so the hourly DeadlineUrgentCron
+   * and the create/update emit paths each alert the assignee only once
+   * per deadline. Cleared whenever the due date changes or the task is
+   * reopened, so a new deadline can trigger a fresh alert.
+   */
+  @Prop({ type: Date, default: null })
+  deadlineUrgentNotifiedAt?: Date | null;
 }
 
 export const TaskSchema = SchemaFactory.createForClass(Task);
+
+TaskSchema.virtual('assigneeId').get(function (this: TaskDocument) {
+  return refId(this.assignee);
+});

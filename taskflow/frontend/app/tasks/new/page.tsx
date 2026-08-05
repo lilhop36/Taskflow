@@ -106,8 +106,9 @@ export default function NewTaskPage() {
   if (!isPM) {
     return (
       <div>
-        <h1 className="text-2xl font-bold mb-4">New Task</h1>
-        <p className="text-sm text-gray-500">
+        <p className="eyebrow">Create</p>
+        <h1 className="page-title mt-1">New Task</h1>
+        <p className="mt-4 text-sm text-sage">
           Only Project Managers and Administrators can create tasks.
         </p>
       </div>
@@ -116,18 +117,22 @@ export default function NewTaskPage() {
 
   return (
     <div className="max-w-2xl">
-      <Link href="/tasks" className="text-sm text-blue-600 hover:underline">
+      <Link href="/tasks" className="text-sm text-gold-deep hover:underline">
         &larr; Back to tasks
       </Link>
-      <h1 className="text-2xl font-bold my-4">New Task</h1>
+      <header className="my-4">
+        <p className="eyebrow">Create</p>
+        <h1 className="page-title mt-1">New Task</h1>
+        <span className="thread mt-3 w-14" aria-hidden="true" />
+      </header>
 
       {error && (
-        <p className="mb-4 text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">
+        <p className="mb-4 text-sm text-ember bg-ember-soft border border-ember/30 rounded-md px-3 py-2">
           {error}
         </p>
       )}
 
-      <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow space-y-4">
+      <form onSubmit={handleSubmit} className="card p-6 space-y-4">
         <div>
           <label className="block text-sm font-medium mb-1">Title</label>
           <input
@@ -135,7 +140,7 @@ export default function NewTaskPage() {
             required
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full border rounded px-3 py-2 text-sm"
+            className="input"
             placeholder="e.g. Fix login redirect"
           />
         </div>
@@ -147,7 +152,7 @@ export default function NewTaskPage() {
             rows={3}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="w-full border rounded px-3 py-2 text-sm"
+            className="input"
             placeholder="What needs to be done?"
           />
         </div>
@@ -158,7 +163,7 @@ export default function NewTaskPage() {
             <select
               value={priority}
               onChange={(e) => setPriority(e.target.value)}
-              className="w-full border rounded px-3 py-2 text-sm"
+              className="input"
             >
               <option value="High">High</option>
               <option value="Medium">Medium</option>
@@ -172,7 +177,7 @@ export default function NewTaskPage() {
               required
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
-              className="w-full border rounded px-3 py-2 text-sm"
+              className="input"
             />
           </div>
         </div>
@@ -183,7 +188,7 @@ export default function NewTaskPage() {
             required
             value={projectId}
             onChange={(e) => handleProjectChange(e.target.value)}
-            className="w-full border rounded px-3 py-2 text-sm"
+            className="input"
           >
             <option value="">Select a project…</option>
             {projects.map((p) => (
@@ -196,7 +201,7 @@ export default function NewTaskPage() {
           <label className="block text-sm font-medium mb-1">
             Assignee{' '}
             {selectedProject && (
-              <span className="text-xs text-gray-400">
+              <span className="text-xs text-sage">
                 (members of {selectedProject.name})
               </span>
             )}
@@ -206,7 +211,7 @@ export default function NewTaskPage() {
             value={assigneeId}
             onChange={(e) => setAssigneeId(e.target.value)}
             disabled={!selectedProject}
-            className="w-full border rounded px-3 py-2 text-sm disabled:bg-gray-100"
+            className="input disabled:bg-black/5"
           >
             <option value="">
               {selectedProject ? 'Select a team member…' : 'Choose a project first'}
@@ -223,7 +228,7 @@ export default function NewTaskPage() {
           <button
             type="submit"
             disabled={submitting}
-            className="bg-blue-600 text-white px-6 py-2 rounded text-sm font-medium hover:bg-blue-700 disabled:opacity-50"
+            className="btn-gold"
           >
             {submitting ? 'Creating…' : 'Create Task'}
           </button>

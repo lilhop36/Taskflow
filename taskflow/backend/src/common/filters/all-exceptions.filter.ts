@@ -31,9 +31,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       const status = exception.getStatus();
       const res = exception.getResponse();
       const body =
-        typeof res === 'string'
-          ? { statusCode: status, message: res }
-          : res;
+        typeof res === 'string' ? { statusCode: status, message: res } : res;
       response.status(status).json(body);
       return;
     }
@@ -72,8 +70,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
     }
 
     if (name === 'ValidationError') {
-      const errors = (exception as { errors?: Record<string, { message?: string }> })
-        .errors;
+      const errors = (
+        exception as { errors?: Record<string, { message?: string }> }
+      ).errors;
       if (errors && Object.keys(errors).length > 0) {
         return Object.values(errors)
           .map((e) => e.message)

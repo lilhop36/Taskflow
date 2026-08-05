@@ -4,31 +4,41 @@ import { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import { BarChart, Bar, Cell, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { formatDate } from '@/lib/utils';
+import { errorMessage } from '@/lib/ui';
 
-interface Project {
+interface DashboardProject {
   _id: string;
   name: string;
-  status: string;
-  startDate: string;
-  endDate: string;
 }
 
-interface Task {
-  _id: string;
+interface OverdueTask {
+  id: string;
   title: string;
+  dueDate: string;
   status: string;
   project: string;
-  dueDate: string;
+}
+
+interface DashboardData {
+  projects: DashboardProject[];
+  summary: {
+    total: number;
+    done: number;
+    completionPercent: number;
+    overdueCount: number;
+  };
+  distribution: { todo: number; inProgress: number; done: number };
+  overdueTasks: OverdueTask[];
 }
 
 /**
- * Bar colors for the status distribution chart (FR-006.2).
- * To Do = gray, In Progress = amber, Done = green.
+ * Bar colors for the status distribution chart (FR-006.2), drawn from the
+ * TaskFlow palette: To Do = sage, In Progress = gold, Done = teal.
  */
 const BAR_COLORS: Record<string, string> = {
-  'To Do': '#6b7280',      // Gray
-  'In Progress': '#eab308', // Yellow/Amber
-  'Done': '#22c55e',        // Green
+  'To Do': '#6E6A5B',
+  'In Progress': '#D99A2B',
+  'Done': '#14736A',
 };
 
 /**
@@ -39,109 +49,145 @@ const BAR_COLORS: Record<string, string> = {
  * - Bar chart of task status distribution across a selected project (FR-006.2)
  * - Overdue task alerts (FR-006.3)
  *
- * Data is fetched live from the backend on every visit.
- * SRS: FR-006.1-3 — real-time progress, visual chart, deadline alerts
+ * All stats come from a single GET /reports/dashboard call — the backend
+ * aggregates completion %, status distribution, and overdue tasks, so the
+ * browser no longer downloads every project and task to compute them.
  */
 export default function DashboardPage() {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [selectedProject, setSelectedProject] = useState<string>('');
+  const [selectedProject, setSelectedProject] = useState('');
+  const [dashboard, setDashboard] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    api.get('/projects').then((r) => setProjects(r.data));
-    api.get('/tasks').then((r) => setTasks(r.data));
-  }, []);
+    let cancelled = false;
+    setLoading(true);
+    setError('');
 
-  const projectTasks = selectedProject
-    ? tasks.filter((t) => t.project === selectedProject)
-    : tasks;
+    const query = selectedProject ? `?project=${selectedProject}` : '';
+    api
+      .get<DashboardData>(`/reports/dashboard${query}`)
+      .then((r) => {
+        if (!cancelled) setDashboard(r.data);
+      })
+      .catch((err) => {
+        if (!cancelled) setError(errorMessage(err, 'Failed to load dashboard'));
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
 
-  const todo = projectTasks.filter((t) => t.status === 'To Do').length;
-  const inProgress = projectTasks.filter((t) => t.status === 'In Progress').length;
-  const done = projectTasks.filter((t) => t.status === 'Done').length;
-  const total = projectTasks.length;
-  const completion = total > 0 ? Math.round((done / total) * 100) : 0;
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedProject]);
 
-  const now = new Date();
-  const overdue = projectTasks.filter((t) => t.status !== 'Done' && new Date(t.dueDate) < now);
+  if (loading) {
+    return <p className="text-sage text-sm">Loading dashboard…</p>;
+  }
+
+  if (error) {
+    return <p className="text-ember text-sm">{error}</p>;
+  }
+
+  if (!dashboard) return null;
+
+  const { summary, distribution, overdueTasks } = dashboard;
 
   const chartData = [
-    { name: 'To Do', count: todo, fill: BAR_COLORS['To Do'] },
-    { name: 'In Progress', count: inProgress, fill: BAR_COLORS['In Progress'] },
-    { name: 'Done', count: done, fill: BAR_COLORS['Done'] },
+    { name: 'To Do', count: distribution.todo, fill: BAR_COLORS['To Do'] },
+    { name: 'In Progress', count: distribution.inProgress, fill: BAR_COLORS['In Progress'] },
+    { name: 'Done', count: distribution.done, fill: BAR_COLORS['Done'] },
+  ];
+
+  const metrics = [
+    { label: 'Total tasks', value: summary.total, tone: 'text-ink' },
+    { label: 'Completed', value: summary.done, tone: 'text-teal' },
+    { label: 'Completion', value: `${summary.completionPercent}%`, tone: 'text-gold-deep' },
+    { label: 'Overdue', value: summary.overdueCount, tone: 'text-ember' },
   ];
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
+      <header className="mb-8">
+        <p className="eyebrow">Workspace overview</p>
+        <h1 className="page-title mt-1">Dashboard</h1>
+        <span className="thread mt-3 w-14" aria-hidden="true" />
+      </header>
 
       {/* Project filter */}
-      <div className="mb-6">
-        <label className="text-sm font-medium mr-2">Project:</label>
+      <div className="mb-6 flex items-center gap-3">
+        <label htmlFor="project-filter" className="font-mono text-[11px] uppercase tracking-[0.12em] text-sage">
+          Scope
+        </label>
         <select
+          id="project-filter"
           value={selectedProject}
           onChange={(e) => setSelectedProject(e.target.value)}
-          className="border rounded px-3 py-1 text-sm"
+          className="rounded-md border border-black/10 bg-card px-3 py-1.5 text-sm text-ink focus:border-gold focus:outline-none"
         >
           <option value="">All projects</option>
-          {projects.map((p) => (
+          {dashboard.projects.map((p) => (
             <option key={p._id} value={p._id}>{p.name}</option>
           ))}
         </select>
       </div>
 
-      {/* Summary cards */}
-      <div className="grid grid-cols-4 gap-4 mb-8">
-        <div className="bg-white rounded-lg shadow p-4">
-          <p className="text-sm text-gray-500">Total Tasks</p>
-          <p className="text-2xl font-bold">{total}</p>
-        </div>
-        <div className="bg-white rounded-lg shadow p-4">
-          <p className="text-sm text-gray-500">Completed</p>
-          <p className="text-2xl font-bold text-green-600">{done}</p>
-        </div>
-        <div className="bg-white rounded-lg shadow p-4">
-          <p className="text-sm text-gray-500">Completion</p>
-          <p className="text-2xl font-bold text-blue-600">{completion}%</p>
-        </div>
-        <div className="bg-white rounded-lg shadow p-4">
-          <p className="text-sm text-gray-500">Overdue</p>
-          <p className="text-2xl font-bold text-red-600">{overdue.length}</p>
-        </div>
+      {/* Summary metrics — hairline cards, mono numerals */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {metrics.map((m) => (
+          <div key={m.label} className="card px-5 py-4">
+            <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-sage">{m.label}</p>
+            <p className={`mt-1.5 font-mono text-3xl font-semibold ${m.tone}`}>{m.value}</p>
+          </div>
+        ))}
       </div>
 
-      {/* Bar chart */}
-      <div className="bg-white rounded-lg shadow p-4 mb-8">
-        <h2 className="text-sm font-semibold mb-3">Task Status Distribution</h2>
-        <ResponsiveContainer width="100%" height={250}>
-          <BarChart data={chartData}>
-            <XAxis dataKey="name" />
-            <YAxis allowDecimals={false} />
-            <Tooltip />
-            <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-              {chartData.map((entry) => (
-                <Cell key={entry.name} fill={entry.fill} />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-      </div>
-
-      {/* Overdue tasks */}
-      {overdue.length > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <h2 className="text-sm font-semibold text-red-800 mb-2">
-            Overdue Tasks
+      <div className="grid lg:grid-cols-3 gap-4">
+        {/* Bar chart */}
+        <div className="card p-5 lg:col-span-2">
+          <h2 className="font-mono text-[11px] uppercase tracking-[0.14em] text-sage">
+            Task status distribution
           </h2>
-          <ul className="text-sm text-red-700 space-y-1">
-            {overdue.slice(0, 10).map((t) => (
-              <li key={t._id}>
-                • {t.title} — due {formatDate(t.dueDate)}
-              </li>
-            ))}
-          </ul>
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart data={chartData} margin={{ top: 16, right: 8, left: -18, bottom: 0 }}>
+              <XAxis dataKey="name" tick={{ fill: '#6E6A5B', fontSize: 12 }} axisLine={{ stroke: '#E3DECF' }} tickLine={false} />
+              <YAxis allowDecimals={false} tick={{ fill: '#6E6A5B', fontSize: 12 }} axisLine={false} tickLine={false} />
+              <Tooltip
+                cursor={{ fill: 'rgba(217,154,43,0.08)' }}
+                contentStyle={{ background: '#191712', border: 'none', borderRadius: 8, color: '#FDFBF4', fontSize: 12 }}
+                labelStyle={{ color: '#A99F89', fontFamily: 'var(--font-plex-mono)', fontSize: 10, textTransform: 'uppercase' }}
+              />
+              <Bar dataKey="count" radius={[4, 4, 0, 0]} maxBarSize={64}>
+                {chartData.map((entry) => (
+                  <Cell key={entry.name} fill={entry.fill} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
         </div>
-      )}
+
+        {/* Overdue tasks */}
+        <div className={`card p-5 ${overdueTasks.length === 0 ? 'border-teal/30' : 'border-ember/30 bg-ember-soft/40'}`}>
+          <h2 className={`font-mono text-[11px] uppercase tracking-[0.14em] ${overdueTasks.length === 0 ? 'text-teal' : 'text-ember'}`}>
+            {overdueTasks.length === 0 ? 'No overdue tasks' : `Overdue · ${overdueTasks.length}`}
+          </h2>
+          {overdueTasks.length === 0 ? (
+            <p className="mt-4 text-sm text-sage">Everything is on track. The flow is clear.</p>
+          ) : (
+            <ul className="mt-4 space-y-3">
+              {overdueTasks.slice(0, 6).map((t) => (
+                <li key={t.id} className="border-l-2 border-ember/50 pl-3">
+                  <p className="text-sm font-medium text-ink">{t.title}</p>
+                  <p className="mt-0.5 font-mono text-[11px] text-ember">
+                    due {formatDate(t.dueDate)}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

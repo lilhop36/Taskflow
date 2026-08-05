@@ -13,7 +13,7 @@ import { Comment, CommentSchema } from './schemas/comment.schema';
  * Imports TasksModule so CommentsService can inject TasksRepository
  * (to verify the task exists before adding a comment).
  * Imports ProjectsModule so the ProjectMemberGuard can inject
- * TasksService and ProjectsService (project access check).
+ * TasksService and the VisibilityPolicyService (project access check).
  *
  * SRS: FR-007.1-3
  */

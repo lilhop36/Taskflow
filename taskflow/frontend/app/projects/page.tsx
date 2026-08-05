@@ -44,34 +44,47 @@ export default function ProjectsPage() {
   const taskCount = (projectId: string) =>
     tasks.filter((t) => t.project === projectId).length;
 
-  if (loading) return <p className="text-gray-400 text-sm">Loading projects…</p>;
+  if (loading) return <p className="text-sage text-sm">Loading projects…</p>;
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Projects</h1>
+      <header className="mb-8 flex items-end justify-between">
+        <div>
+          <p className="eyebrow">Project register</p>
+          <h1 className="page-title mt-1">Projects</h1>
+          <span className="thread mt-3 w-14" aria-hidden="true" />
+        </div>
         {canManage(user?.role) ? (
-          <Link href="/projects/new" className="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">
-            + New Project
+          <Link href="/projects/new" className="btn-gold">
+            + New project
           </Link>
         ) : null}
-      </div>
+      </header>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {projects.map((p) => (
-          <Link key={p._id} href={`/projects/${p._id}`} className="block bg-white rounded-lg shadow p-4 hover:shadow-md transition">
-            <h2 className="font-semibold mb-1">{p.name}</h2>
-            <p className="text-sm text-gray-500 mb-2 line-clamp-2">{p.description}</p>
-            <div className="flex items-center justify-between mt-2">
-              <span className="text-xs text-gray-500">{taskCount(p._id)} tasks</span>
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${projectStatusBadge(p.status)}`}>
+          <Link
+            key={p._id}
+            href={`/projects/${p._id}`}
+            className="card block p-5 transition-colors hover:border-gold/60"
+          >
+            <h2 className="font-display text-lg font-semibold tracking-tight text-ink">{p.name}</h2>
+            <p className="mt-1 text-sm text-sage mb-3 line-clamp-2">{p.description}</p>
+            <div className="flex items-center justify-between border-t border-black/5 pt-3">
+              <span className="font-mono text-[11px] text-sage">{taskCount(p._id)} tasks</span>
+              <span className={`rounded-full px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.08em] ${projectStatusBadge(p.status)}`}>
                 {p.status}
               </span>
             </div>
-            <div className="mt-1 text-xs text-gray-400">
+            <div className="mt-1 font-mono text-[11px] text-sand">
               {formatDate(p.startDate)} – {formatDate(p.endDate)}
             </div>
           </Link>
         ))}
+        {projects.length === 0 && (
+          <p className="card px-5 py-10 text-center text-sm text-sage">
+            No projects yet — create the first one.
+          </p>
+        )}
       </div>
     </div>
   );

@@ -21,6 +21,13 @@ interface Task {
   assignee?: { _id: string; firstName: string; lastName: string };
 }
 
+/** Small colored dot for a task's lifecycle status. */
+const STATUS_DOT: Record<string, string> = {
+  'To Do': 'bg-sage',
+  'In Progress': 'bg-gold',
+  'Done': 'bg-teal',
+};
+
 export default function ProjectDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
@@ -63,66 +70,70 @@ export default function ProjectDetailPage() {
     setArchiving(false);
   };
 
-  if (!project) return <p className="text-gray-400 text-sm">Loading…</p>;
+  if (!project) return <p className="text-sage text-sm">Loading…</p>;
 
   return (
     <div>
-      <Link href="/projects" className="text-sm text-blue-600 hover:underline">&larr; Back to projects</Link>
-      <div className="flex items-start justify-between mt-2 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold">{project.name}</h1>
-          <p className="text-sm text-gray-500 mt-1">{project.description}</p>
-          <p className="text-xs text-gray-400 mt-1">
+      <Link href="/projects" className="text-sm text-gold-deep hover:underline">&larr; Back to projects</Link>
+      <div className="flex items-start justify-between mt-3 mb-6">
+        <div className="min-w-0">
+          <p className="eyebrow">Project detail</p>
+          <h1 className="page-title mt-1">{project.name}</h1>
+          <p className="mt-2 text-sm text-sage leading-relaxed">{project.description}</p>
+          <p className="mt-2 font-mono text-[11px] text-sand">
             {formatDate(project.startDate)} – {formatDate(project.endDate)}
-            &nbsp;· Status: {project.status}
           </p>
         </div>
-        <div className="flex flex-col items-end gap-2">
-          <span className={`px-3 py-1 rounded-full text-xs font-medium ${projectStatusBadge(project.status)}`}>
+        <div className="flex flex-col items-end gap-2 shrink-0">
+          <span className={`rounded-full px-3 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.1em] ${projectStatusBadge(project.status)}`}>
             {project.status}
           </span>
           {isPM && project.status !== 'Archived' && (
             <button
               onClick={handleArchive}
               disabled={archiving}
-              className="px-3 py-1.5 rounded text-xs font-medium bg-red-600 text-white hover:bg-red-700 disabled:opacity-50"
+              className="rounded-md border border-ember/40 px-3 py-1.5 text-xs font-semibold text-ember transition-colors hover:bg-ember hover:text-white disabled:opacity-50"
             >
               {archiving ? 'Archiving…' : 'Archive project'}
             </button>
           )}
           {archiveError && (
-            <p className="text-xs text-red-600 max-w-xs text-right">{archiveError}</p>
+            <p className="text-xs text-ember max-w-xs text-right">{archiveError}</p>
           )}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <div className="bg-white rounded-lg shadow p-4">
-          <h3 className="text-sm font-semibold mb-2">Members ({project.members?.length ?? 0})</h3>
-          <ul className="text-sm space-y-1">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+        <div className="card p-5">
+          <h3 className="font-mono text-[11px] uppercase tracking-[0.14em] text-sage">
+            Members ({project.members?.length ?? 0})
+          </h3>
+          <ul className="mt-2 text-sm space-y-1">
             {project.members?.map((m) => (
-              <li key={m._id} className="text-gray-700 relative group cursor-help" title={m.email}>
+              <li key={m._id} className="text-ink relative group cursor-help" title={m.email}>
                 {m.firstName} {m.lastName}
-                <span className="text-gray-400 text-xs ml-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <span className="text-sand font-mono text-xs ml-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   ({m.email})
                 </span>
               </li>
             ))}
-            {project.members?.length === 0 && <li className="text-gray-400 italic">No members</li>}
+            {project.members?.length === 0 && <li className="text-sand italic">No members</li>}
           </ul>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-4">
-          <h3 className="text-sm font-semibold mb-2">Teams ({project.teams?.length ?? 0})</h3>
-          <ul className="text-sm space-y-1">
+        <div className="card p-5">
+          <h3 className="font-mono text-[11px] uppercase tracking-[0.14em] text-sage">
+            Teams ({project.teams?.length ?? 0})
+          </h3>
+          <ul className="mt-2 text-sm space-y-1">
             {project.teams?.map((t) => (
-              <li key={t._id} className="text-gray-700">{t.name} <span className="text-gray-400">— {t.description}</span></li>
+              <li key={t._id} className="text-ink">{t.name} <span className="text-sand">— {t.description}</span></li>
             ))}
-            {project.teams?.length === 0 && <li className="text-gray-400 italic">No teams associated</li>}
+            {project.teams?.length === 0 && <li className="text-sand italic">No teams associated</li>}
           </ul>
           {isPM && (
             <select
-              className="mt-2 border rounded px-2 py-1 text-xs w-full"
+              className="input mt-3 w-full py-1.5 text-xs"
               onChange={(e) => addTeam(e.target.value)}
             >
               <option value="">+ Add team…</option>
@@ -136,26 +147,38 @@ export default function ProjectDetailPage() {
         </div>
       </div>
 
-      <h2 className="text-lg font-semibold mb-3">Tasks ({tasks.length})</h2>
+      <header className="mb-4">
+        <p className="eyebrow">Workload</p>
+        <h2 className="font-display text-xl font-semibold tracking-tight text-ink">
+          Tasks <span className="font-mono text-sm font-medium text-sage">({tasks.length})</span>
+        </h2>
+      </header>
       <div className="space-y-2">
         {tasks.length === 0 ? (
-          <div className="text-center py-8 bg-slate-50 rounded-lg border border-dashed border-slate-300">
-            <p className="text-sm text-gray-500 mb-2">No tasks yet</p>
-            <Link href={`/tasks/new?project=${id}`} className="text-sm text-blue-600 hover:underline font-medium">
+          <div className="card px-6 py-10 text-center border-dashed">
+            <p className="text-sm text-sage mb-3">No tasks yet — open the flow.</p>
+            <Link href={`/tasks/new?project=${id}`} className="btn-gold">
               + Create your first task
             </Link>
           </div>
         ) : (
           tasks.map((t) => (
-            <Link key={t._id} href={`/tasks/${t._id}`} className="flex items-center justify-between bg-white rounded-lg shadow px-4 py-3 hover:shadow-md transition">
-              <div>
-                <p className="font-medium">{t.title}</p>
-                <p className="text-xs text-gray-400">
+            <Link
+              key={t._id}
+              href={`/tasks/${t._id}`}
+              className="card flex items-center justify-between px-5 py-3.5 transition-colors hover:border-gold/60"
+            >
+              <div className="min-w-0">
+                <p className="flex items-center gap-2.5 font-medium text-ink">
+                  <span className={`h-2 w-2 shrink-0 rounded-full ${STATUS_DOT[t.status] ?? 'bg-sage'}`} aria-hidden="true" />
+                  <span className="truncate">{t.title}</span>
+                </p>
+                <p className="mt-0.5 pl-[1.125rem] font-mono text-[11px] text-sage">
                   {t.assignee ? `${t.assignee.firstName} ${t.assignee.lastName}` : 'Unassigned'} · Due {formatDate(t.dueDate)}
                 </p>
               </div>
-              <div className="flex items-center gap-3 text-xs">
-                <span className={priorityColor(t.priority)}>{t.priority}</span>
+              <div className="flex items-center gap-4 text-xs shrink-0">
+                <span className={`font-semibold ${priorityColor(t.priority)}`}>{t.priority}</span>
                 <span className={statusColor(t.status)}>{t.status}</span>
               </div>
             </Link>

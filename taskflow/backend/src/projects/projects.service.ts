@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { UserRole } from '../users/schemas/user.schema';
 import { UsersService } from '../users/users.service';
@@ -9,12 +10,14 @@ import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { ProjectsRepository } from './projects.repository';
 import { ProjectStatus } from './schemas/project.schema';
+import { VisibilityPolicyService } from './visibility-policy.service';
 
 @Injectable()
 export class ProjectsService {
   constructor(
     private readonly projectsRepository: ProjectsRepository,
     private readonly usersService: UsersService,
+    private readonly visibilityPolicy: VisibilityPolicyService,
   ) {}
 
   async create(createProjectDto: CreateProjectDto) {
@@ -53,6 +56,32 @@ export class ProjectsService {
 
   async findAll() {
     const projects = await this.projectsRepository.findAll();
+    return projects.map((p) => p.toObject());
+  }
+
+  /**
+   * List projects scoped to what the caller may see:
+   * - Administrators / Project Managers (BR-001 hierarchy) see all projects.
+   * - Team Members see only the projects they own or are listed as a member of.
+   * - A missing user fails closed — production routes always populate
+   *   request.user via the global JwtAuthGuard.
+   */
+  async findAllForUser(user?: {
+    _id: { toString(): string };
+    role?: UserRole;
+  }) {
+    if (!user) {
+      throw new UnauthorizedException('Authentication required');
+    }
+    // BR-001 hierarchy: Admins/PMs see everything; Team Members only their
+    // own projects (BR-003). Decision delegated to the single visibility
+    // policy — the same rule every read endpoint uses.
+    if (this.visibilityPolicy.isFullVisibility(user.role)) {
+      return this.findAll();
+    }
+    const projects = await this.projectsRepository.findByMember(
+      user._id.toString(),
+    );
     return projects.map((p) => p.toObject());
   }
 
@@ -119,24 +148,5 @@ export class ProjectsService {
       throw new NotFoundException(`Project with ID ${id} not found`);
     }
     return archived.toObject();
-  }
-
-  /**
-   * Checks whether a user may access a project's content (tasks/comments).
-   *
-   * FR-007.2 requires project access for commenting; BR-001 role hierarchy
-   * extends that access: Administrators and Project Managers have
-   * cross-project visibility (matching RolesGuard), while TeamMembers must
-   * be an actual owner/member of the project.
-   */
-  async isUserMemberOfProject(
-    userId: string,
-    projectId: string,
-    role?: UserRole,
-  ): Promise<boolean> {
-    if (role === UserRole.ADMIN || role === UserRole.PROJECT_MANAGER) {
-      return true;
-    }
-    return this.projectsRepository.isUserMemberOfProject(userId, projectId);
   }
 }
