@@ -2,6 +2,6 @@
   "moduleFileExtensions": ["js", "cjs", "json"],
   "rootDir": "..",
   "testEnvironment": "node",
-  "testRegex": "test/.e2e-spec\\.cjs$",
+  "testRegex": "test[\\\\/].*\\.e2e-spec\\.cjs$",
   "transform": {}
 }

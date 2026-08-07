@@ -36,7 +36,10 @@ export class TeamsController {
 
   @Patch(':id')
   @Roles(UserRole.ADMIN)
-  update(@Param('id', ParseMongoIdPipe) id: string, @Body() dto: UpdateTeamDto) {
+  update(
+    @Param('id', ParseMongoIdPipe) id: string,
+    @Body() dto: UpdateTeamDto,
+  ) {
     return this.teamsService.update(id, dto);
   }
 
@@ -48,7 +51,10 @@ export class TeamsController {
 
   @Post(':id/members')
   @Roles(UserRole.ADMIN)
-  addMembers(@Param('id', ParseMongoIdPipe) id: string, @Body('userIds') userIds: string[]) {
+  addMembers(
+    @Param('id', ParseMongoIdPipe) id: string,
+    @Body('userIds') userIds: string[],
+  ) {
     return this.teamsService.addMembers(id, userIds);
   }
 

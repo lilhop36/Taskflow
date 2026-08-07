@@ -52,10 +52,7 @@ export class UsersRepository {
   // Updates a user's profile fields.
   // { new: true } returns the updated document, not the original.
   // { runValidators: true } runs schema validators on the update.
-  async update(
-    id: string,
-    data: Partial<User>,
-  ): Promise<UserDocument | null> {
+  async update(id: string, data: Partial<User>): Promise<UserDocument | null> {
     return this.userModel
       .findByIdAndUpdate(id, data, { new: true, runValidators: true })
       .select('-passwordHash')
@@ -68,11 +65,7 @@ export class UsersRepository {
   // they made — the audit trail is preserved.
   async deactivate(id: string): Promise<UserDocument | null> {
     return this.userModel
-      .findByIdAndUpdate(
-        id,
-        { status: UserStatus.INACTIVE },
-        { new: true },
-      )
+      .findByIdAndUpdate(id, { status: UserStatus.INACTIVE }, { new: true })
       .select('-passwordHash')
       .exec();
   }

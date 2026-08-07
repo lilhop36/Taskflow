@@ -86,7 +86,10 @@ describe('AuthService', () => {
   // ─── validateUser() ───────────────────────────────────────────────────────
 
   describe('validateUser()', () => {
-    const loginDto = { email: 'jane@example.com', password: 'correct-password' };
+    const loginDto = {
+      email: 'jane@example.com',
+      password: 'correct-password',
+    };
 
     it('should return user when credentials are valid (FR-001.1)', async () => {
       usersService.findByEmailWithPassword.mockResolvedValue(mockUser);
@@ -179,9 +182,9 @@ describe('AuthService', () => {
       jwtService.verify.mockReturnValue({
         sub: 'user-id-123',
         version: 0,
-      } as any);
+      });
       usersService.findById.mockResolvedValue(mockUser);
-      usersService.bumpRefreshTokenVersion.mockResolvedValue(mockUser as any);
+      usersService.bumpRefreshTokenVersion.mockResolvedValue(mockUser);
     });
 
     it('should rotate tokens and revoke the old refresh token (NFR-005)', async () => {
@@ -226,9 +229,9 @@ describe('AuthService', () => {
         refreshTokenVersion: 1,
       });
 
-      await expect(service.refreshAccessToken('old-refresh-token')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        service.refreshAccessToken('old-refresh-token'),
+      ).rejects.toThrow(UnauthorizedException);
       expect(usersService.bumpRefreshTokenVersion).not.toHaveBeenCalled();
     });
 

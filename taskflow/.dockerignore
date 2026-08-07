@@ -1,0 +1,20 @@
+# Dependencies — installed inside the image
+node_modules
+
+# Build output — regenerated in the build stage
+dist
+.next
+out
+build
+coverage
+
+# Environment & secrets — never baked into images
+.env
+.env.*
+!.env.example
+
+# Local tooling / docs
+.git
+.gitignore
+*.log
+.DS_Store

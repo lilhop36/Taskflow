@@ -51,7 +51,8 @@ export class CommentsController {
   async create(
     @Param('taskId', ParseMongoIdPipe) taskId: string,
     @Body() createCommentDto: CreateCommentDto,
-    @CurrentUser() user: {
+    @CurrentUser()
+    user: {
       _id: { toString(): string };
       firstName?: string;
       lastName?: string;

@@ -13,7 +13,9 @@ describe('ProjectsRepository.isUserMemberOfProject — FR-007.2', () => {
   const memberId = new Types.ObjectId().toString();
   const outsiderId = new Types.ObjectId().toString();
 
-  function makeRepo(project: { owner?: Types.ObjectId; members?: Types.ObjectId[] } | null) {
+  function makeRepo(
+    project: { owner?: Types.ObjectId; members?: Types.ObjectId[] } | null,
+  ) {
     const select = jest.fn().mockReturnThis();
     const exec = jest.fn().mockResolvedValue(project);
     const findById = jest.fn().mockReturnValue({ select, exec });

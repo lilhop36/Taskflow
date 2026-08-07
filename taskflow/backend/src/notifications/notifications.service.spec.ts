@@ -90,7 +90,7 @@ describe('NotificationsService', () => {
 
   describe('markAllAsRead() — FR-008.4', () => {
     it('should mark all of a user notifications as read', async () => {
-      repository.markAllAsRead.mockResolvedValue({ modifiedCount: 2 } as any);
+      repository.markAllAsRead.mockResolvedValue({ modifiedCount: 2 });
       await service.markAllAsRead('user-1');
       expect(repository.markAllAsRead).toHaveBeenCalledWith('user-1');
     });

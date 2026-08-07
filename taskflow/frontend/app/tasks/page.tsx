@@ -15,8 +15,10 @@ interface Task {
 
 /** Small colored dot for the task's lifecycle status. */
 const STATUS_DOT: Record<string, string> = {
+  'Backlog': 'bg-sand',
   'To Do': 'bg-sage',
   'In Progress': 'bg-gold',
+  'In Review': 'bg-gold-deep',
   'Done': 'bg-teal',
 };
 
@@ -51,7 +53,7 @@ export default function TasksPage() {
 
       <div className="mb-6 flex items-center gap-4 flex-wrap">
         <div className="flex gap-1.5">
-          {['', 'To Do', 'In Progress', 'Done'].map((s) => (
+          {['', 'Backlog', 'To Do', 'In Progress', 'In Review', 'Done'].map((s) => (
             <button
               key={s}
               onClick={() => setFilter(s)}

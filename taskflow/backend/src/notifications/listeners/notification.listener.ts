@@ -131,4 +131,54 @@ export class NotificationListener {
       task: event.taskId,
     });
   }
+
+  /**
+   * Handles the sprint.started event → notifies every project member
+   * except the actor who started it. Deep-links into the sprint.
+   */
+  @OnEvent('sprint.started')
+  async handleSprintStarted(event: {
+    actorId: string;
+    sprintId: string;
+    sprintName: string;
+    projectId: string;
+    memberIds: string[];
+  }) {
+    for (const memberId of event.memberIds) {
+      if (memberId === event.actorId) continue;
+      await this.notificationsRepository.create({
+        recipient: memberId,
+        type: NotificationType.SPRINT_STARTED,
+        message: `Sprint "${event.sprintName}" has started`,
+        sprint: event.sprintId,
+        sender: event.actorId,
+      });
+    }
+  }
+
+  /**
+   * Handles the sprint.completed event → notifies every project member
+   * with a summary of how many tasks were delivered. Self-actor excluded.
+   */
+  @OnEvent('sprint.completed')
+  async handleSprintCompleted(event: {
+    actorId: string;
+    sprintId: string;
+    sprintName: string;
+    projectId: string;
+    memberIds: string[];
+    totalTasks: number;
+    completedTasks: number;
+  }) {
+    for (const memberId of event.memberIds) {
+      if (memberId === event.actorId) continue;
+      await this.notificationsRepository.create({
+        recipient: memberId,
+        type: NotificationType.SPRINT_COMPLETED,
+        message: `Sprint "${event.sprintName}" completed with ${event.completedTasks}/${event.totalTasks} tasks done`,
+        sprint: event.sprintId,
+        sender: event.actorId,
+      });
+    }
+  }
 }

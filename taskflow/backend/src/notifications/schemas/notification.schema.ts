@@ -30,6 +30,7 @@ export interface CreateNotificationInput {
   task?: string;
   comment?: string;
   sender?: string;
+  sprint?: string;
 }
 
 /**
@@ -40,12 +41,16 @@ export interface CreateNotificationInput {
  * - STATUS_CHANGED: alert when a task status changes (FR-008.2)
  * - DEADLINE_URGENT: alert when a task is within 24h of due date (FR-008.3)
  * - COMMENT: alert when a new comment is posted on a task the user owns/assigns (FR-007)
+ * - SPRINT_STARTED: alert to project members when a sprint starts
+ * - SPRINT_COMPLETED: alert to project members when a sprint completes
  */
 export enum NotificationType {
   TASK_ASSIGNED = 'TaskAssigned',
   STATUS_CHANGED = 'StatusChanged',
   DEADLINE_URGENT = 'DeadlineUrgent',
   COMMENT = 'Comment',
+  SPRINT_STARTED = 'SprintStarted',
+  SPRINT_COMPLETED = 'SprintCompleted',
 }
 
 /**
@@ -87,6 +92,14 @@ export class Notification {
    */
   @Prop({ type: SchemaTypes.ObjectId, ref: 'User' })
   sender?: Types.ObjectId;
+
+  /**
+   * Optional reference to the Sprint that triggered this notification
+   * (set for SPRINT_STARTED / SPRINT_COMPLETED alerts). Lets the UI
+   * deep-link into the sprint context instead of just the message text.
+   */
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Sprint' })
+  sprint?: Types.ObjectId;
 
   @Prop({ default: false })
   read: boolean;

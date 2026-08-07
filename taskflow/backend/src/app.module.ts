@@ -14,6 +14,8 @@ import { TasksModule } from './tasks/tasks.module';
 import { TeamsModule } from './teams/teams.module';
 import { UsersModule } from './users/users.module';
 import { HealthModule } from './health/health.module';
+import { SprintsModule } from './sprints/sprints.module';
+import { ActivityModule } from './activity/activity.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
@@ -68,6 +70,12 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
     // TeamsModule enables team creation and member management (FR-003.1-3).
     TeamsModule,
+
+    // ActivityModule records a project/task activity timeline across modules.
+    ActivityModule,
+
+    // SprintsModule powers sprint planning, the sprint board, and analytics.
+    SprintsModule,
 
     // AuthModule encapsulates User authentication, Passport JWT strategy, and session tokens.
     AuthModule,

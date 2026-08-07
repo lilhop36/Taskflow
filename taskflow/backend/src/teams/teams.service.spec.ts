@@ -89,23 +89,34 @@ describe('TeamsService', () => {
 
     it('should throw NotFoundException when team does not exist', async () => {
       repository.findById.mockResolvedValue(null);
-      await expect(service.findById('missing')).rejects.toThrow(NotFoundException);
+      await expect(service.findById('missing')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
   describe('update()', () => {
     it('should update an existing team (FR-003.1)', async () => {
       repository.findById.mockResolvedValue(mockTeam);
-      repository.update.mockResolvedValue({ ...mockTeam, description: 'Updated' } as any);
+      repository.update.mockResolvedValue({
+        ...mockTeam,
+        description: 'Updated',
+      });
 
-      const result = await service.update('team-id-123', { description: 'Updated' });
-      expect(repository.update).toHaveBeenCalledWith('team-id-123', { description: 'Updated' });
+      const result = await service.update('team-id-123', {
+        description: 'Updated',
+      });
+      expect(repository.update).toHaveBeenCalledWith('team-id-123', {
+        description: 'Updated',
+      });
       expect(result).toBeDefined();
     });
 
     it('should throw NotFoundException when team does not exist', async () => {
       repository.findById.mockResolvedValue(null);
-      await expect(service.update('missing', { name: 'x' })).rejects.toThrow(NotFoundException);
+      await expect(service.update('missing', { name: 'x' })).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -119,23 +130,32 @@ describe('TeamsService', () => {
 
     it('should throw NotFoundException when team does not exist', async () => {
       repository.findById.mockResolvedValue(null);
-      await expect(service.delete('missing')).rejects.toThrow(NotFoundException);
+      await expect(service.delete('missing')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
   describe('addMembers() — FR-003.2', () => {
     it('should add members to a team', async () => {
       repository.findById.mockResolvedValue(mockTeam);
-      repository.addMembers.mockResolvedValue({ ...mockTeam, members: ['user-1'] } as any);
+      repository.addMembers.mockResolvedValue({
+        ...mockTeam,
+        members: ['user-1'],
+      });
 
       const result = await service.addMembers('team-id-123', ['user-1']);
-      expect(repository.addMembers).toHaveBeenCalledWith('team-id-123', ['user-1']);
+      expect(repository.addMembers).toHaveBeenCalledWith('team-id-123', [
+        'user-1',
+      ]);
       expect(result).toBeDefined();
     });
 
     it('should throw NotFoundException when team does not exist', async () => {
       repository.findById.mockResolvedValue(null);
-      await expect(service.addMembers('missing', ['user-1'])).rejects.toThrow(NotFoundException);
+      await expect(service.addMembers('missing', ['user-1'])).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -145,13 +165,18 @@ describe('TeamsService', () => {
       repository.removeMember.mockResolvedValue(mockTeam);
 
       const result = await service.removeMember('team-id-123', 'user-1');
-      expect(repository.removeMember).toHaveBeenCalledWith('team-id-123', 'user-1');
+      expect(repository.removeMember).toHaveBeenCalledWith(
+        'team-id-123',
+        'user-1',
+      );
       expect(result).toBeDefined();
     });
 
     it('should throw NotFoundException when team does not exist', async () => {
       repository.findById.mockResolvedValue(null);
-      await expect(service.removeMember('missing', 'user-1')).rejects.toThrow(NotFoundException);
+      await expect(service.removeMember('missing', 'user-1')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });

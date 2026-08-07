@@ -14,6 +14,11 @@ Taskflow is a full-stack task and project management application (monorepo) pair
 - Styling: Tailwind CSS
 - Charts: Recharts
 
+## Deploying
+
+See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for the full go-live guide
+(Vercel + Render, database seeding, env vars, CI, and Fly.io alternative).
+
 ## Repository layout
 
 ```

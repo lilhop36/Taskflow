@@ -146,7 +146,9 @@ describe('UsersService', () => {
 
       // Assert: bcrypt.hash was called with the plain password and >= 10 rounds
       const [, saltRounds] = (bcrypt.hash as jest.Mock).mock.calls[0];
-      expect(typeof saltRounds === 'number' ? saltRounds : 0).toBeGreaterThanOrEqual(10);
+      expect(
+        typeof saltRounds === 'number' ? saltRounds : 0,
+      ).toBeGreaterThanOrEqual(10);
     });
   });
 
@@ -210,18 +212,28 @@ describe('UsersService', () => {
     it('should update user when valid data is provided (FR-002.2)', async () => {
       repository.findById.mockResolvedValue(mockUser);
       repository.findByEmail.mockResolvedValue(null);
-      repository.update.mockResolvedValue({ ...mockUser, firstName: 'Janet' } as any);
+      repository.update.mockResolvedValue({
+        ...mockUser,
+        firstName: 'Janet',
+      });
 
-      const result = await service.update('user-id-123', { firstName: 'Janet' });
+      const result = await service.update('user-id-123', {
+        firstName: 'Janet',
+      });
 
-      expect(repository.update).toHaveBeenCalledWith('user-id-123', { firstName: 'Janet' });
+      expect(repository.update).toHaveBeenCalledWith('user-id-123', {
+        firstName: 'Janet',
+      });
       expect(result.firstName).toBe('Janet');
     });
 
     it('should throw ConflictException if new email belongs to another user (BR-007)', async () => {
-      const differentUser = { ...mockUser, _id: { toString: () => 'other-user-id' } };
+      const differentUser = {
+        ...mockUser,
+        _id: { toString: () => 'other-user-id' },
+      };
       repository.findById.mockResolvedValue(mockUser);
-      repository.findByEmail.mockResolvedValue(differentUser as any);
+      repository.findByEmail.mockResolvedValue(differentUser);
 
       await expect(
         service.update('user-id-123', { email: 'other@example.com' }),

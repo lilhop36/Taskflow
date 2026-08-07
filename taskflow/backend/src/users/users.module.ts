@@ -15,7 +15,9 @@ import { User, UserSchema } from './schemas/user.schema';
  * - Export UsersService so other modules (e.g. AuthModule) can inject it.
  */
 @Module({
-  imports: [MongooseModule.forFeature([{ name: User.name, schema: UserSchema }])],
+  imports: [
+    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+  ],
   controllers: [UsersController],
   providers: [UsersService, UsersRepository],
   exports: [UsersService, UsersRepository],

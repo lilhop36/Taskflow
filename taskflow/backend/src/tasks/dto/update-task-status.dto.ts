@@ -2,9 +2,16 @@ import { IsEnum, IsNotEmpty } from 'class-validator';
 import { TaskStatus } from '../schemas/task.schema';
 
 const VALID_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
-  [TaskStatus.TODO]: [TaskStatus.IN_PROGRESS],
-  [TaskStatus.IN_PROGRESS]: [TaskStatus.TODO, TaskStatus.DONE],
-  [TaskStatus.DONE]: [TaskStatus.IN_PROGRESS],
+  [TaskStatus.BACKLOG]: [TaskStatus.TODO],
+  [TaskStatus.TODO]: [TaskStatus.IN_PROGRESS, TaskStatus.BACKLOG],
+  [TaskStatus.IN_PROGRESS]: [
+    TaskStatus.TODO,
+    TaskStatus.IN_REVIEW,
+    TaskStatus.DONE,
+  ],
+  [TaskStatus.IN_REVIEW]: [TaskStatus.IN_PROGRESS, TaskStatus.DONE],
+  [TaskStatus.DONE]: [TaskStatus.IN_PROGRESS, TaskStatus.ARCHIVED],
+  [TaskStatus.ARCHIVED]: [TaskStatus.TODO],
 };
 
 export { VALID_TRANSITIONS };

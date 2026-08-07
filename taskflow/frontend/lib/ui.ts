@@ -16,7 +16,9 @@ export function statusColor(status: string): string {
     ? 'text-teal'
     : status === 'In Progress'
       ? 'text-gold-deep'
-      : 'text-sage';
+      : status === 'Backlog'
+        ? 'text-sand'
+        : 'text-sage';
 }
 
 /** Text color class for a task's priority. */

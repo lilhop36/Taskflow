@@ -15,9 +15,12 @@ export interface TaskDocumentRefs {
 export type TaskDocument = HydratedDocument<Task> & TaskDocumentRefs;
 
 export enum TaskStatus {
+  BACKLOG = 'Backlog',
   TODO = 'To Do',
   IN_PROGRESS = 'In Progress',
+  IN_REVIEW = 'In Review',
   DONE = 'Done',
+  ARCHIVED = 'Archived',
 }
 
 export enum TaskPriority {
@@ -70,6 +73,12 @@ export class Task {
    */
   @Prop({ type: Date, default: null })
   deadlineUrgentNotifiedAt?: Date | null;
+
+  @Prop({ type: Boolean, default: false })
+  isBlocked: boolean;
+
+  @Prop({ type: SchemaTypes.ObjectId, ref: 'Sprint', default: null })
+  sprintId?: Types.ObjectId | null;
 }
 
 export const TaskSchema = SchemaFactory.createForClass(Task);

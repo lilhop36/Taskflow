@@ -26,10 +26,7 @@ export class TeamsRepository {
       .exec();
   }
 
-  async update(
-    id: string,
-    data: Partial<Team>,
-  ): Promise<TeamDocument | null> {
+  async update(id: string, data: Partial<Team>): Promise<TeamDocument | null> {
     return this.teamModel
       .findByIdAndUpdate(id, data, { new: true, runValidators: true })
       .populate('members', '-passwordHash')
@@ -54,16 +51,9 @@ export class TeamsRepository {
       .exec();
   }
 
-  async removeMember(
-    id: string,
-    userId: string,
-  ): Promise<TeamDocument | null> {
+  async removeMember(id: string, userId: string): Promise<TeamDocument | null> {
     return this.teamModel
-      .findByIdAndUpdate(
-        id,
-        { $pull: { members: userId } },
-        { new: true },
-      )
+      .findByIdAndUpdate(id, { $pull: { members: userId } }, { new: true })
       .populate('members', '-passwordHash')
       .exec();
   }

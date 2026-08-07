@@ -33,7 +33,9 @@ export class CreateUserDto {
   // The regex (?=.*[!@#$%^&*]) means "must contain at least one special character"
   @IsNotEmpty({ message: 'Password is required' })
   @MinLength(8, { message: 'Password must be at least 8 characters' })
-  @Matches(/(?=.*[0-9])/, { message: 'Password must contain at least one number' })
+  @Matches(/(?=.*[0-9])/, {
+    message: 'Password must contain at least one number',
+  })
   @Matches(/(?=.*[!@#$%^&*])/, {
     message: 'Password must contain at least one special character (!@#$%^&*)',
   })

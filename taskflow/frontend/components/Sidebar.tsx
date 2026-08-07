@@ -10,6 +10,7 @@ const navItems = [
   { href: '/dashboard', label: 'Dashboard', roles: ['Administrator', 'ProjectManager', 'TeamMember'] },
   { href: '/projects', label: 'Projects', roles: ['Administrator', 'ProjectManager', 'TeamMember'] },
   { href: '/tasks', label: 'Tasks', roles: ['Administrator', 'ProjectManager', 'TeamMember'] },
+  { href: '/sprints', label: 'Sprints', roles: ['Administrator', 'ProjectManager', 'TeamMember'] },
   { href: '/notifications', label: 'Notifications', roles: ['Administrator', 'ProjectManager', 'TeamMember'] },
   { href: '/reports', label: 'Reports', roles: ['Administrator', 'ProjectManager'] },
   { href: '/teams', label: 'Teams', roles: ['Administrator'] },

@@ -23,8 +23,10 @@ interface Task {
 
 /** Small colored dot for a task's lifecycle status. */
 const STATUS_DOT: Record<string, string> = {
+  'Backlog': 'bg-sand',
   'To Do': 'bg-sage',
   'In Progress': 'bg-gold',
+  'In Review': 'bg-gold-deep',
   'Done': 'bg-teal',
 };
 
@@ -88,15 +90,20 @@ export default function ProjectDetailPage() {
           <span className={`rounded-full px-3 py-1 font-mono text-[10px] font-semibold uppercase tracking-[0.1em] ${projectStatusBadge(project.status)}`}>
             {project.status}
           </span>
-          {isPM && project.status !== 'Archived' && (
-            <button
-              onClick={handleArchive}
-              disabled={archiving}
-              className="rounded-md border border-ember/40 px-3 py-1.5 text-xs font-semibold text-ember transition-colors hover:bg-ember hover:text-white disabled:opacity-50"
-            >
-              {archiving ? 'Archiving…' : 'Archive project'}
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            <Link href={`/sprints?project=${id}`} className="btn-ghost">
+              Sprints
+            </Link>
+            {isPM && project.status !== 'Archived' && (
+              <button
+                onClick={handleArchive}
+                disabled={archiving}
+                className="rounded-md border border-ember/40 px-3 py-1.5 text-xs font-semibold text-ember transition-colors hover:bg-ember hover:text-white disabled:opacity-50"
+              >
+                {archiving ? 'Archiving…' : 'Archive project'}
+              </button>
+            )}
+          </div>
           {archiveError && (
             <p className="text-xs text-ember max-w-xs text-right">{archiveError}</p>
           )}

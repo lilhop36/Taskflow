@@ -1,7 +1,16 @@
 import axios from 'axios';
 
+// Backend base URL. Injected at build time via NEXT_PUBLIC_API_URL so the
+// same codebase works locally (default) and on Vercel/Render (override).
+// A trailing slash is stripped so callers can concatenate paths safely.
+const API_BASE_URL =
+  (process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001/api').replace(
+    /\/$/,
+    '',
+  );
+
 const api = axios.create({
-  baseURL: 'http://localhost:3001/api',
+  baseURL: API_BASE_URL,
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
 });
@@ -15,7 +24,7 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       try {
-        await axios.post('http://localhost:3001/api/auth/refresh', {}, { withCredentials: true });
+        await axios.post(`${API_BASE_URL}/auth/refresh`, {}, { withCredentials: true });
         return api(originalRequest);
       } catch {
         if (window.location.pathname !== '/login') {

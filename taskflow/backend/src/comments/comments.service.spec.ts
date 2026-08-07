@@ -125,7 +125,7 @@ describe('CommentsService', () => {
       commentsRepository.create.mockResolvedValue(mockComment);
 
       const result = await service.create(
-        { content: 'Hello task' } as any,
+        { content: 'Hello task' },
         TASK_ID,
         AUTHOR_ID,
       );
@@ -159,7 +159,7 @@ describe('CommentsService', () => {
       commentsRepository.create.mockResolvedValue(mockReply);
 
       const result = await service.create(
-        { content: 'A reply', replyTo: REPLY_TO_ID } as any,
+        { content: 'A reply', replyTo: REPLY_TO_ID },
         TASK_ID,
         AUTHOR_ID,
         'Hanna Girma',

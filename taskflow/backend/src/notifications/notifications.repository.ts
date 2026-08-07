@@ -33,6 +33,7 @@ export class NotificationsRepository {
       message: input.message,
       ...(input.task ? { task: new Types.ObjectId(input.task) } : {}),
       ...(input.comment ? { comment: new Types.ObjectId(input.comment) } : {}),
+      ...(input.sprint ? { sprint: new Types.ObjectId(input.sprint) } : {}),
       // sender is optional attribution: the events are the typed source —
       // they carry a real user id when a human actor is known and omit the
       // field entirely otherwise (system-generated). The repository simply
@@ -75,6 +76,7 @@ export class NotificationsRepository {
       })
       .sort({ createdAt: -1 })
       .populate('task', 'title')
+      .populate('sprint', 'name')
       .exec();
   }
 
@@ -88,6 +90,7 @@ export class NotificationsRepository {
       .find({ recipient: new Types.ObjectId(userId) })
       .sort({ createdAt: -1 })
       .populate('task', 'title')
+      .populate('sprint', 'name')
       .exec();
   }
 
