@@ -201,6 +201,7 @@ seeded demo session (no login page).
 - **[API Parity Matrix](taskflow/docs/API-PARITY.md)** — endpoint ↔ requirement traceability
 - **[Deployment Guide](docs/DEPLOYMENT.md)** — Vercel + Render + Fly.io, seeding, env vars, CI
 - **[Screenshots Gallery](https://lilhop36.github.io/Taskflow/)** — hosted UI captures of the dashboard, tasks, sprints, and projects (always on; see [markdown version](docs/SCREENSHOTS.md))
+- **[Social Preview Card](docs/social-card.png)** — 1280×640 product card; **upload this file** at repo Settings → General → Social preview → Edit to make GitHub repo shares show the product
 - **[Architecture Diagrams](taskflow/diagrams/)** — UML class, sequence, activity, state machine
 - **[Engineering Notes](taskflow/docs/learning-notes/)** — module-by-module build journal
 - **[Project Charter](taskflow/docs/02-project-charter.md)** & **[Client Request](taskflow/docs/01-Client-Request-Letter.md)**

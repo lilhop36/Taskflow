@@ -47,6 +47,7 @@ jobs:
         run: |
           mkdir -p _site/screenshots
           cp pages/index.html _site/index.html
+          cp docs/social-card.png _site/social-card.png
           cp docs/screenshots/*.png _site/screenshots/
 
       - name: Configure Pages
