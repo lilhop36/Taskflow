@@ -1,0 +1,62 @@
+name: Deploy gallery to GitHub Pages
+
+# Publishes the product screenshot gallery to
+# https://lilhop36.github.io/Taskflow/ — a second, always-on link to the
+# UI that works even when the temporary demo tunnel is offline.
+#
+# To enable: repo Settings → Pages → Source: "GitHub Actions" → Save.
+# This workflow (or any push touching the gallery) then deploys.
+#
+# The site is intentionally static (no framework): the workflow copies
+# pages/index.html + docs/screenshots/*.png into an artifact and lets
+# actions/deploy-pages host it. Relative links keep it path-agnostic for
+# project sites (served under /Taskflow/).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'pages/**'
+      - 'docs/screenshots/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+# Grant the workflow permission to publish to Pages and mint an OIDC token.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deploy at a time; cancel in-flight runs if a newer push arrives.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Build & deploy static gallery
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Assemble static site
+        run: |
+          mkdir -p _site/screenshots
+          cp pages/index.html _site/index.html
+          cp docs/screenshots/*.png _site/screenshots/
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

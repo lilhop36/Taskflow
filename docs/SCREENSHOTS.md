@@ -3,6 +3,9 @@
 Real captures from the running application (seeded demo data). These live in the
 repo so the UI is visible even when the temporary demo tunnel is offline.
 
+> 🌐 Prefer a browsable page? The **hosted gallery** is always on at
+> **<https://lilhop36.github.io/Taskflow/>** (deployed via GitHub Actions).
+
 ## Dashboard
 
 The workspace overview — completion stats, task status distribution, and overdue

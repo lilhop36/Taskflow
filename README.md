@@ -35,7 +35,7 @@ accounts exist in the database for API exploration and role switching.
 
 > ⚠️ The demo runs through a temporary Cloudflare tunnel from a local machine — it may be offline
 > outside working hours. The backend API is at `https://lined-exp-submission-afford.trycloudflare.com/api`.
-> Screenshots below are committed to the repo and always render: **[full gallery →](docs/SCREENSHOTS.md)**
+> Screenshots are always available — **[hosted gallery →](https://lilhop36.github.io/Taskflow/)** · **[markdown gallery →](docs/SCREENSHOTS.md)**
 
 </div>
 
@@ -200,7 +200,7 @@ seeded demo session (no login page).
 - **[Software Requirements Specification](taskflow/docs/03-software-requirements-specification.md)** — the spec this was built against
 - **[API Parity Matrix](taskflow/docs/API-PARITY.md)** — endpoint ↔ requirement traceability
 - **[Deployment Guide](docs/DEPLOYMENT.md)** — Vercel + Render + Fly.io, seeding, env vars, CI
-- **[Screenshots](docs/SCREENSHOTS.md)** — UI captures of the dashboard, tasks, sprints, and projects
+- **[Screenshots Gallery](https://lilhop36.github.io/Taskflow/)** — hosted UI captures of the dashboard, tasks, sprints, and projects (always on; see [markdown version](docs/SCREENSHOTS.md))
 - **[Architecture Diagrams](taskflow/diagrams/)** — UML class, sequence, activity, state machine
 - **[Engineering Notes](taskflow/docs/learning-notes/)** — module-by-module build journal
 - **[Project Charter](taskflow/docs/02-project-charter.md)** & **[Client Request](taskflow/docs/01-Client-Request-Letter.md)**

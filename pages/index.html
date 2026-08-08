@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TaskFlow — Product Screenshots</title>
+  <meta name="description" content="TaskFlow is a full-stack project management platform built with NestJS, Next.js, React, and MongoDB. Real product screenshots of the dashboard, tasks, sprints, and projects." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Manrope:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ink: #191711;
+      --ink-line: rgba(255, 255, 255, 0.08);
+      --paper: #f5f2ea;
+      --card: #fffdf7;
+      --sand: #b8ad97;
+      --gold: #e8b24a;
+      --gold-deep: #c9922f;
+      --ember: #d2553b;
+      --sage: #5b8a72;
+      --teal: #2e8b8b;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: "Manrope", system-ui, sans-serif;
+      background: var(--paper);
+      color: var(--ink);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; }
+
+    /* Masthead — mirrors the app's dark sidebar */
+    header {
+      background: var(--ink);
+      color: var(--card);
+      padding: 56px 24px 48px;
+      border-bottom: 1px solid var(--ink-line);
+    }
+    .wrap { max-width: 1080px; margin: 0 auto; }
+    .wordmark {
+      font-family: "Fraunces", Georgia, serif;
+      font-size: 30px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+    .wordmark .gold { color: var(--gold); }
+    .thread {
+      display: block;
+      width: 44px;
+      height: 2px;
+      background: var(--gold);
+      margin: 18px 0 22px;
+    }
+    h1 {
+      font-family: "Fraunces", Georgia, serif;
+      font-size: clamp(34px, 5vw, 52px);
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+      max-width: 640px;
+    }
+    .lede {
+      margin-top: 14px;
+      color: var(--sand);
+      max-width: 560px;
+      font-size: 15px;
+    }
+    .links { margin-top: 28px; display: flex; gap: 12px; flex-wrap: wrap; }
+    .btn {
+      display: inline-block;
+      padding: 10px 18px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+    .btn-primary { background: var(--gold); color: var(--ink); }
+    .btn-primary:hover { background: var(--gold-deep); }
+    .btn-ghost { border: 1px solid rgba(255, 255, 255, 0.25); color: var(--card); }
+    .btn-ghost:hover { background: rgba(255, 255, 255, 0.08); }
+
+    /* Gallery */
+    main { padding: 48px 24px 72px; }
+    .gallery { display: grid; gap: 40px; }
+    figure {
+      background: var(--card);
+      border: 1px solid rgba(25, 23, 17, 0.08);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(25, 23, 17, 0.05);
+      transition: box-shadow 0.2s ease, transform 0.2s ease;
+    }
+    figure:hover { box-shadow: 0 12px 32px rgba(25, 23, 17, 0.12); transform: translateY(-2px); }
+    figure a { display: block; }
+    figure img {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-bottom: 1px solid rgba(25, 23, 17, 0.08);
+    }
+    figcaption { padding: 20px 24px 22px; }
+    figcaption h2 {
+      font-family: "Fraunces", Georgia, serif;
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+    figcaption .tag {
+      display: inline-block;
+      margin-bottom: 10px;
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold-deep);
+    }
+    figcaption p { color: #6b6453; font-size: 14px; }
+
+    footer {
+      border-top: 1px solid rgba(25, 23, 17, 0.1);
+      padding: 32px 24px 40px;
+      text-align: center;
+      color: #8a8271;
+      font-size: 13px;
+    }
+    footer a { text-decoration: underline; text-underline-offset: 3px; }
+    footer .mono { font-family: "IBM Plex Mono", monospace; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold-deep); }
+
+    @media (max-width: 640px) {
+      header { padding: 40px 20px 36px; }
+      main { padding: 32px 16px 56px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="wordmark">Task<span class="gold">Flow</span></div>
+      <span class="thread" aria-hidden="true"></span>
+      <h1>Product screenshots</h1>
+      <p class="lede">
+        Real captures from the running application with seeded demo data — dashboard analytics,
+        task lifecycle, sprint planning, and project portfolio. Built with NestJS, Next.js,
+        React, and MongoDB.
+      </p>
+      <div class="links">
+        <a class="btn btn-primary" href="https://github.com/lilhop36/Taskflow">View source on GitHub</a>
+        <a class="btn btn-ghost" href="https://discussion-upgrades-int-eleven.trycloudflare.com" rel="noopener">Live demo</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="wrap gallery">
+      <figure>
+        <a href="screenshots/dashboard.png" target="_blank" rel="noopener"><img src="screenshots/dashboard.png" alt="TaskFlow dashboard showing completion stats, task status distribution, and overdue tasks" loading="lazy" /></a>
+        <figcaption>
+          <span class="tag">Overview</span>
+          <h2>Dashboard</h2>
+          <p>Completion percentage, task status distribution chart, and overdue highlights for the selected project scope.</p>
+        </figcaption>
+      </figure>
+
+      <figure>
+        <a href="screenshots/tasks.png" target="_blank" rel="noopener"><img src="screenshots/tasks.png" alt="TaskFlow tasks list with lifecycle status, priority, and filterable columns" loading="lazy" /></a>
+        <figcaption>
+          <span class="tag">Work management</span>
+          <h2>Tasks</h2>
+          <p>Full lifecycle tracking — Backlog to Done — with priorities, deadlines, and status filters.</p>
+        </figcaption>
+      </figure>
+
+      <figure>
+        <a href="screenshots/sprints.png" target="_blank" rel="noopener"><img src="screenshots/sprints.png" alt="TaskFlow sprint planning board with lifecycle states and burndown analytics" loading="lazy" /></a>
+        <figcaption>
+          <span class="tag">Planning</span>
+          <h2>Sprints</h2>
+          <p>Sprint lifecycle, task assignment, and burndown analytics computed from real history.</p>
+        </figcaption>
+      </figure>
+
+      <figure>
+        <a href="screenshots/projects.png" target="_blank" rel="noopener"><img src="screenshots/projects.png" alt="TaskFlow projects portfolio view with status and archival state" loading="lazy" /></a>
+        <figcaption>
+          <span class="tag">Portfolio</span>
+          <h2>Projects</h2>
+          <p>Project portfolio with status, membership, and archival state.</p>
+        </figcaption>
+      </figure>
+    </div>
+  </main>
+
+  <footer>
+    <p class="mono">TaskFlow</p>
+    <p style="margin-top:6px">
+      NestJS · Next.js · React · MongoDB · Jest — full-stack project management platform.<br />
+      <a href="https://github.com/lilhop36/Taskflow">github.com/lilhop36/Taskflow</a>
+    </p>
+  </footer>
+</body>
+</html>
