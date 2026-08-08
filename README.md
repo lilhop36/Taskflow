@@ -18,7 +18,7 @@ a full activity audit trail, and report generation — all wrapped in a 197-test
 ![CI](https://img.shields.io/badge/CI-GitHub%20Actions-2088FF?style=flat-square&logo=githubactions&logoColor=white)
 ![License](https://img.shields.io/badge/license-UNLICENSED-lightgrey?style=flat-square)
 
-**[🚀 Live Demo](https://discussion-upgrades-int-eleven.trycloudflare.com)** &nbsp;·&nbsp; **[API Docs](taskflow/docs/API-PARITY.md)** &nbsp;·&nbsp; **[SRS](taskflow/docs/03-software-requirements-specification.md)** &nbsp;·&nbsp; **[Deployment Guide](docs/DEPLOYMENT.md)**
+**[🚀 Live Demo](https://solid-nhs-str-injured.trycloudflare.com)** &nbsp;·&nbsp; **[API Docs](taskflow/docs/API-PARITY.md)** &nbsp;·&nbsp; **[SRS](taskflow/docs/03-software-requirements-specification.md)** &nbsp;·&nbsp; **[Deployment Guide](docs/DEPLOYMENT.md)**
 
 ---
 
@@ -34,7 +34,7 @@ accounts exist in the database for API exploration and role switching.
 | 🧑‍💻 **Team Member** | `hanna@taskflow.dev` | `DemoPass123!` |
 
 > ⚠️ The demo runs through a temporary Cloudflare tunnel from a local machine — it may be offline
-> outside working hours. The backend API is at `https://lined-exp-submission-afford.trycloudflare.com/api`.
+> outside working hours. The backend API is at `https://daughters-elected-expertise-customise.trycloudflare.com/api`.
 > Screenshots are always available — **[hosted gallery →](https://lilhop36.github.io/Taskflow/)** · **[markdown gallery →](docs/SCREENSHOTS.md)**
 
 </div>
