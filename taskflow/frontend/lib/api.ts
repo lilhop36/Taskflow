@@ -28,14 +28,16 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch {
         // Session is gone. Skip the redirect for the auth bootstrap calls
-        // (/auth/session, /auth/login) — AuthProvider handles those itself
-        // with the demo auto sign-in. For any other call, reload the app
-        // so the session is re-established. There is no login page anymore.
+        // (/auth/session, /auth/login, /auth/logout) — AuthProvider handles
+        // those itself (demo auto sign-in, or staying logged out after a
+        // deliberate sign-out). For any other call, send the user to the
+        // login page.
         const isAuthBootstrap =
           originalRequest.url.includes('/auth/session') ||
-          originalRequest.url.includes('/auth/login');
+          originalRequest.url.includes('/auth/login') ||
+          originalRequest.url.includes('/auth/logout');
         if (!isAuthBootstrap) {
-          window.location.href = '/';
+          window.location.href = '/login';
         }
       }
     }

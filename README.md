@@ -24,8 +24,9 @@ a full activity audit trail, and report generation — all wrapped in a 197-test
 
 ### Seeded Accounts
 
-The app opens straight into a demo session (no login page). These seeded
-accounts exist in the database for API exploration and role switching.
+The app opens straight into a demo session (silent demo auto-login as the
+Project Manager). Use **Sign out** in the sidebar to reach the login page,
+where any seeded account below can be used to explore role-scoped views.
 
 | Role | Email | Password |
 |---|---|---|
@@ -191,7 +192,10 @@ cd frontend && npm run dev         # UI  → http://localhost:3000
 ```
 
 Open **http://localhost:3000** — the workspace opens straight in with a
-seeded demo session (no login page).
+seeded demo session (silent demo auto-login as the Project Manager).
+**Sign out** in the sidebar lands on the login page, where the seeded
+accounts listed above (password `DemoPass123!`) can be used to explore
+each role.
 
 ---
 

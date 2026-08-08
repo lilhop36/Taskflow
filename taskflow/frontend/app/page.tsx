@@ -11,8 +11,8 @@ import { homeForRole } from '@/lib/nav';
  * The AuthProvider restores the session (or silently signs in with the
  * demo account), then this page routes to the role's home:
  * Administrator → /users, ProjectManager → /dashboard, TeamMember → /tasks.
- *
- * No login page exists — the app opens ready to use.
+ * After a deliberate sign-out, no session is restored and the user lands
+ * on the login page instead.
  */
 export default function HomePage() {
   const { user, loading } = useAuth();
@@ -20,7 +20,7 @@ export default function HomePage() {
 
   useEffect(() => {
     if (loading) return;
-    router.replace(user ? homeForRole(user.role) : '/dashboard');
+    router.replace(user ? homeForRole(user.role) : '/login');
   }, [user, loading, router]);
 
   // Minimal screen while the session is being checked — no flash of chrome.

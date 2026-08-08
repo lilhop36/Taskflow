@@ -99,10 +99,11 @@ export default function Sidebar() {
       <div className="px-3 pb-5 border-t border-ink-line pt-4">
         <button
           onClick={async () => {
-            // There is no login page — signing out clears the session and
-            // reloads so the demo auto-login restores the workspace.
+            // Signing out clears the session and lands on the login page.
+            // AuthContext sets a signed-out flag so the demo auto-login
+            // doesn't instantly sign the user back in.
             await logout();
-            window.location.href = '/';
+            window.location.href = '/login';
           }}
           className="w-full text-left px-3 py-2 text-sm text-sand transition-colors hover:text-gold"
         >
