@@ -27,8 +27,15 @@ api.interceptors.response.use(
         await axios.post(`${API_BASE_URL}/auth/refresh`, {}, { withCredentials: true });
         return api(originalRequest);
       } catch {
-        if (window.location.pathname !== '/login') {
-          window.location.href = '/login';
+        // Session is gone. Skip the redirect for the auth bootstrap calls
+        // (/auth/session, /auth/login) — AuthProvider handles those itself
+        // with the demo auto sign-in. For any other call, reload the app
+        // so the session is re-established. There is no login page anymore.
+        const isAuthBootstrap =
+          originalRequest.url.includes('/auth/session') ||
+          originalRequest.url.includes('/auth/login');
+        if (!isAuthBootstrap) {
+          window.location.href = '/';
         }
       }
     }

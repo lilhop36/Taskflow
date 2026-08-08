@@ -1,22 +1,19 @@
 'use client';
 
 import { ReactNode } from 'react';
-import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import Sidebar from './Sidebar';
 
 /**
  * AppShell wraps authenticated pages with a sidebar + content area.
- * On the /login page the sidebar is hidden.
+ *
+ * There is no login page — the AuthProvider silently signs in with the
+ * demo account on first visit, so the app always opens ready to use.
  */
 export function AppShell({ children }: { children: ReactNode }) {
-  const pathname = usePathname();
   const { user, loading } = useAuth();
 
-  // Login page gets no chrome
-  if (pathname === '/login') return <>{children}</>;
-
-  // While checking the session, show a minimal spinner
+  // While checking the session / signing in, show a minimal spinner
   if (loading) {
     return (
       <div className="h-full flex items-center justify-center text-sage text-sm">
@@ -25,11 +22,11 @@ export function AppShell({ children }: { children: ReactNode }) {
     );
   }
 
-  // Not authenticated and not on login — redirect happens in AuthContext interceptor
+  // No session and demo sign-in failed (e.g. backend unreachable)
   if (!user) {
     return (
-      <div className="h-full flex items-center justify-center">
-        <a href="/login" className="text-gold-deep underline">Go to login</a>
+      <div className="h-full flex items-center justify-center text-sand text-sm">
+        Could not connect to the workspace. Please try again.
       </div>
     );
   }

@@ -1,8 +1,8 @@
 /**
  * Returns the role-appropriate landing page for an authenticated user.
  *
- * Mirrors the login redirect logic (app/login/page.tsx) so the root page
- * and login page share a single source of truth.
+ * Single source of truth used by the root page (app/page.tsx) and any
+ * post-sign-in redirect.
  *
  * BR-001 role hierarchy: Administrator > ProjectManager > TeamMember.
  * - Administrator → /users (user management)

@@ -39,12 +39,18 @@ MongoDB Atlas (MONGODB_URI)
 | `JWT_ACCESS_SECRET` | Render secret | yes | `openssl rand -hex 32` |
 | `JWT_REFRESH_SECRET` | Render secret | yes | `openssl rand -hex 32` |
 | `CORS_ORIGIN` | Render | yes | your Vercel URL, e.g. `https://taskflow.vercel.app` |
+| `COOKIE_SAME_SITE` | Render | no | `none` for cross-site Vercel→Render; default `lax` |
 | `NEXT_PUBLIC_API_URL` | Vercel | yes | `https://taskflow-api.onrender.com/api` |
 | `PORT` | Render auto-injects | no | `main.ts` already reads `process.env.PORT` |
 
 > **CORS note:** `CORS_ORIGIN` should be an explicit list of origins. `*` is
 > accepted but treated as "reflect the request origin" (wildcard + credentials
 > is rejected by browsers). `GET /api/health` is `@Public()` and needs no auth.
+
+> **Cookies note:** Vercel (`*.vercel.app`) and Render (`*.onrender.com`) are
+> **cross-site**, so the auth cookies must be `SameSite=None`. Set
+> `COOKIE_SAME_SITE=none` on Render (cookies are already `Secure` because
+> `NODE_ENV=production`). Local dev and the tunnel demo keep the `lax` default.
 
 Local dev mirrors are documented in `backend/.env.example` and
 `frontend/.env.example`. The backend Joi schema fails fast at boot if

@@ -154,33 +154,59 @@ export class AuthService {
   /**
    * Attaches the HTTP-only auth cookies to the response.
    * Shared by login() and refreshAccessToken().
+   *
+   * SameSite is env-driven: 'lax' (same-site frontend+API, e.g. the
+   * Cloudflare tunnels or local dev) or 'none' for cross-site deploys
+   * (Vercel frontend → Render API).
+   *
+   * Secure is forced on whenever sameSite is 'none' — the browser spec
+   * rejects SameSite=None cookies that aren't Secure — and also on in
+   * production. This keeps cross-site logins working even when
+   * NODE_ENV isn't literally 'production' (e.g. `npm run start:prod`).
    */
   private setAuthCookies(
     res: Response,
     accessToken: string,
     refreshToken: string,
   ) {
+    const sameSite = (process.env.COOKIE_SAME_SITE || 'lax') as
+      | 'lax'
+      | 'none';
+    const secure = sameSite === 'none' || process.env.NODE_ENV === 'production';
+
     res.cookie('access_token', accessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure,
+      sameSite,
       maxAge: 30 * 60 * 1000, // 30 minutes in milliseconds
     });
 
     res.cookie('refresh_token', refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure,
+      sameSite,
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
     });
   }
 
   /**
    * Logs out user by clearing authentication cookies.
+   *
+   * The clear must mirror the set options (path, secure, sameSite), or the
+   * browser rejects the deletion cookie — a non-secure cookie cannot
+   * overwrite a Secure one, so the session would silently survive logout.
    */
   logout(res: Response) {
-    res.clearCookie('access_token');
-    res.clearCookie('refresh_token');
+    const sameSite = (process.env.COOKIE_SAME_SITE || 'lax') as
+      | 'lax'
+      | 'none';
+    const cookieOptions = {
+      path: '/',
+      secure: sameSite === 'none' || process.env.NODE_ENV === 'production',
+      sameSite,
+    };
+    res.clearCookie('access_token', cookieOptions);
+    res.clearCookie('refresh_token', cookieOptions);
     return { message: 'Successfully logged out' };
   }
 }

@@ -25,6 +25,15 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+// Frictionless demo mode: when no session exists (first visit) the app
+// silently signs in as a seeded demo user so the workspace opens straight
+// into the product — no login wall. Disable for a real deployment by
+// setting NEXT_PUBLIC_DEMO_MODE=false (visitors then get the offline
+// message instead of an automatic account).
+const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE !== 'false';
+const DEMO_EMAIL = process.env.NEXT_PUBLIC_DEMO_EMAIL ?? 'abebe@taskflow.dev';
+const DEMO_PASSWORD = process.env.NEXT_PUBLIC_DEMO_PASSWORD ?? 'DemoPass123!';
+
 /**
  * AuthProvider wraps the app and provides:
  * - user: the currently logged-in user (null if not authenticated)
@@ -32,18 +41,46 @@ const AuthContext = createContext<AuthContextValue | undefined>(undefined);
  * - login: email + password authentication
  * - logout: session termination
  *
- * On mount, it calls GET /auth/session (or /users/me) to see if there's
- * an active session from a persisted refresh-token cookie.
+ * On mount, it calls GET /auth/session to restore a persisted session
+ * from the refresh-token cookie. If none exists, it silently signs in
+ * with the seeded demo account so the app opens ready to use.
  */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get<User>('/auth/session')
-      .then((res) => setUser(res.data))
-      .catch(() => setUser(null))
-      .finally(() => setLoading(false));
+    let cancelled = false;
+
+    async function bootstrap() {
+      try {
+        const session = await api.get<User>('/auth/session');
+        if (!cancelled) setUser(session.data);
+      } catch {
+        if (DEMO_MODE) {
+          // No session — auto sign-in with the demo account.
+          try {
+            const res = await api.post<{
+              accessToken: string;
+              refreshToken: string;
+              user: User;
+            }>('/auth/login', { email: DEMO_EMAIL, password: DEMO_PASSWORD });
+            if (!cancelled) setUser(res.data.user);
+          } catch {
+            if (!cancelled) setUser(null);
+          }
+        } else if (!cancelled) {
+          setUser(null);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    bootstrap();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {

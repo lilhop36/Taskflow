@@ -6,30 +6,29 @@ import { useAuth } from '@/contexts/AuthContext';
 import { homeForRole } from '@/lib/nav';
 
 /**
- * Root route — redirects to the role-appropriate landing page.
+ * Root route — opens straight into the workspace.
  *
- * - Unauthenticated → /login
- * - Administrator → /users
- * - ProjectManager → /dashboard
- * - TeamMember     → /tasks
+ * The AuthProvider restores the session (or silently signs in with the
+ * demo account), then this page routes to the role's home:
+ * Administrator → /users, ProjectManager → /dashboard, TeamMember → /tasks.
  *
- * Auth state lives client-side (HTTP-only cookies on the API origin), so
- * this must be a client component reading useAuth() rather than a server
- * component reading cookies.
+ * No login page exists — the app opens ready to use.
  */
 export default function HomePage() {
   const { user, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (loading) return; // wait for the session check to finish
-    router.replace(user ? homeForRole(user.role) : '/login');
-  }, [loading, user, router]);
+    if (loading) return;
+    router.replace(user ? homeForRole(user.role) : '/dashboard');
+  }, [user, loading, router]);
 
-  // Brief spinner while the session check completes / redirect fires.
+  // Minimal screen while the session is being checked — no flash of chrome.
   return (
-    <div className="h-full flex items-center justify-center text-gray-400 text-sm">
-      Loading…
+    <div className="h-full flex items-center justify-center bg-paper">
+      <p className="font-mono text-xs uppercase tracking-[0.14em] text-sand/60">
+        Opening…
+      </p>
     </div>
   );
 }
