@@ -63,8 +63,9 @@ export class UsersService {
       // We then destructure to remove passwordHash before returning.
       const { passwordHash: _, ...result } = user.toObject();
       return result;
-    } catch (error: any) {
-      if (error?.code === 11000) {
+    } catch (error: unknown) {
+      // MongoDB duplicate-key error (code 11000) — the unique index raced us.
+      if ((error as { code?: number } | null)?.code === 11000) {
         throw new ConflictException(
           'An account with this email address already exists',
         );

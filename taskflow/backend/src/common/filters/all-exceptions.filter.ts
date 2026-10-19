@@ -64,9 +64,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
     if (name === 'CastError') {
       const path = (exception as { path?: unknown }).path;
-      return path
-        ? `Invalid value for field "${path}"`
-        : 'Invalid identifier format';
+      if (typeof path === 'string' || typeof path === 'number') {
+        return `Invalid value for field "${path}"`;
+      }
+      return path ? 'Invalid value for field' : 'Invalid identifier format';
     }
 
     if (name === 'ValidationError') {

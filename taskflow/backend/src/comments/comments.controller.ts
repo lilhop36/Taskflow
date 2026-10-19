@@ -20,6 +20,7 @@ import { Task } from '../common/decorators/task.decorator';
 import { ParseMongoIdPipe } from '../common/pipes/parse-mongo-id.pipe';
 import { ProjectMemberGuard } from '../common/guards/project-member.guard';
 import { UserRole } from '../users/schemas/user.schema';
+import type { TaskView } from '../common/types/authenticated-request';
 
 /**
  * Controller for task comment endpoints.
@@ -90,7 +91,7 @@ export class CommentsController {
     @Param('taskId', ParseMongoIdPipe) taskId: string,
     @Param('commentId', ParseMongoIdPipe) commentId: string,
     @Body() updateCommentDto: UpdateCommentDto,
-    @Task() task: any,
+    @Task() task: TaskView,
     @CurrentUser() user: { _id: { toString(): string }; role?: UserRole },
   ) {
     // Verify the comment exists and belongs to the task
@@ -124,7 +125,7 @@ export class CommentsController {
   async remove(
     @Param('taskId', ParseMongoIdPipe) taskId: string,
     @Param('commentId', ParseMongoIdPipe) commentId: string,
-    @Task() task: any,
+    @Task() task: TaskView,
     @CurrentUser() user: { _id: { toString(): string }; role?: UserRole },
   ) {
     // Verify the comment exists and belongs to the task

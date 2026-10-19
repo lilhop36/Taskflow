@@ -24,12 +24,11 @@ jobs:
       - name: Install workspace dependencies
         run: npm ci
 
-      # Lint is advisory (not a gate) while ~260 pre-existing type-aware
-      # errors are cleaned up; tests + build are the real gates. See
-      # docs/DEPLOYMENT.md for the lint-debt cleanup task.
-      - name: Lint (advisory)
+      # Lint is a gate: src/ is fully type-checked and all errors must be
+      # fixed. Test files disable only the unbound-method/no-unsafe-* rules
+      # that fire on Jest mocks (see backend/eslint.config.mjs).
+      - name: Lint
         run: npm run lint --workspace backend
-        continue-on-error: true
 
       - name: Unit tests (uses in-memory MongoDB)
         run: npm test --workspace backend -- --runInBand

@@ -12,7 +12,9 @@ async function bootstrap() {
   // CORS_ORIGIN accepts a comma-separated list so the same binary runs in
   // dev (default localhost:3000) and production (e.g. the Vercel URL).
   const corsOrigins = process.env.CORS_ORIGIN
-    ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim()).filter(Boolean)
+    ? process.env.CORS_ORIGIN.split(',')
+        .map((o) => o.trim())
+        .filter(Boolean)
     : ['http://localhost:3000'];
 
   app.enableCors({
@@ -20,8 +22,10 @@ async function bootstrap() {
     // back to reflecting the request origin (allow any frontend) instead of
     // silently breaking every credentialed request.
     origin: corsOrigins.includes('*')
-      ? (_origin: string, callback: (err: Error | null, allow?: boolean) => void) =>
-          callback(null, true)
+      ? (
+          _origin: string,
+          callback: (err: Error | null, allow?: boolean) => void,
+        ) => callback(null, true)
       : corsOrigins,
     credentials: true,
   });
@@ -64,4 +68,4 @@ async function bootstrap() {
   console.log(`Application running on: http://localhost:${port}/api`);
 }
 
-bootstrap();
+void bootstrap();

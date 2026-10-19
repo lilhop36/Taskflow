@@ -236,7 +236,9 @@ export class CommentsService {
    * Filters out soft-deleted comments unless explicitly requested to include them.
    */
   async findByTask(taskId: string, includeDeleted: boolean = false) {
-    const filter: any = { task: new Types.ObjectId(taskId) };
+    const filter: Record<string, unknown> = {
+      task: new Types.ObjectId(taskId),
+    };
     if (!includeDeleted) {
       filter.deletedAt = { $exists: false };
     }

@@ -7,6 +7,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { UserRole } from '../../users/schemas/user.schema';
 import { ROLES_KEY } from '../decorators/roles.decorator';
+import { AuthenticatedRequest } from '../types/authenticated-request';
 
 /**
  * Authorization Guard — enforces Role-Based Access Control (RBAC).
@@ -59,12 +60,8 @@ export class RolesGuard implements CanActivate {
     // Step 3: Extract the authenticated user from the request.
     // request.user is populated by JwtStrategy.validate() during JwtAuthGuard.
     // Its shape: { userId: string, email: string, role: UserRole }
-    const request = context.switchToHttp().getRequest();
-    const user = request.user as {
-      userId: string;
-      email: string;
-      role: UserRole;
-    };
+    const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
+    const user = request.user;
 
     // Step 4: Check if the user's role satisfies the required roles.
     // BR-001: Role hierarchy — Administrator > ProjectManager > TeamMember.

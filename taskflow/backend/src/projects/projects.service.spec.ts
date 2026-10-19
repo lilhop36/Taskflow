@@ -215,12 +215,15 @@ describe('ProjectsService', () => {
   // ─── create() ─────────────────────────────────────────────────────────────
 
   describe('create()', () => {
+    // The DTO validates @IsMongoId, so fixtures use real ObjectId hex strings
+    // (the service now hands owners/members to `new Types.ObjectId`).
+    const OWNER_ID = '507f1f77bcf86cd799439011';
     const validDto = {
       name: 'TaskFlow MVP',
       description: 'Main project',
       startDate: '2024-01-01',
       endDate: '2024-12-31',
-      owner: 'owner-id',
+      owner: OWNER_ID,
       members: [],
     };
 
@@ -230,7 +233,7 @@ describe('ProjectsService', () => {
 
       const result = await service.create(validDto);
 
-      expect(usersService.findById).toHaveBeenCalledWith('owner-id');
+      expect(usersService.findById).toHaveBeenCalledWith(OWNER_ID);
       expect(repository.create).toHaveBeenCalledWith(
         expect.objectContaining({
           // Dates must be converted to Date objects, not left as strings

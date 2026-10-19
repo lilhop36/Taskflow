@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
+import type { QueryFilter, UpdateQuery } from 'mongoose';
 import { Comment, CommentDocument } from './schemas/comment.schema';
 
 /**
@@ -41,7 +42,7 @@ export class CommentsRepository {
     }
 
     // Add the current content to edit history before updating
-    const updateData: any = {
+    const updateData: UpdateQuery<CommentDocument> = {
       content,
       $push: {
         editHistory: {
@@ -84,9 +85,11 @@ export class CommentsRepository {
    * Finds all comments for a given task with optional filtering.
    * Used for finding comments with filters like excluding deleted ones.
    */
-  async findByTaskWithFilter(filter: any): Promise<CommentDocument[]> {
+  async findByTaskWithFilter(
+    filter: Record<string, unknown>,
+  ): Promise<CommentDocument[]> {
     return this.commentModel
-      .find(filter)
+      .find(filter as QueryFilter<Comment>)
       .sort({ createdAt: 1 })
       .populate('author', '-passwordHash')
       .exec();

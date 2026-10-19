@@ -32,15 +32,6 @@ describe('TasksService', () => {
   let usersService: jest.Mocked<UsersService>;
   let eventEmitter: jest.Mocked<EventEmitter2>;
 
-  const mockProject = {
-    _id: { toString: () => 'project-id-123' },
-    name: 'TaskFlow MVP',
-    startDate: new Date('2024-01-01'),
-    endDate: new Date('2024-12-31'),
-    ownerId: 'owner-id',
-    memberIds: ['member-id'],
-  } as any;
-
   const mockTask = {
     _id: { toString: () => 'task-id-123' },
     title: 'Implement login',
@@ -55,11 +46,6 @@ describe('TasksService', () => {
       status: TaskStatus.TODO,
       priority: TaskPriority.HIGH,
     }),
-  } as any;
-
-  const mockUser = {
-    _id: { toString: () => 'member-id' },
-    email: 'member@example.com',
   } as any;
 
   // Shared repository mock — the real VisibilityPolicyService is wired on
@@ -129,7 +115,6 @@ describe('TasksService', () => {
 
   describe('create()', () => {
     // Valid ObjectId hex strings (BSONError otherwise when casting in the service)
-    const TASK_ID = '507f1f77bcf86cd799439011';
     const MEMBER_ID = '507f1f77bcf86cd799439012';
     const OWNER_ID = '507f1f77bcf86cd799439013';
     const PROJECT_ID = '507f1f77bcf86cd799439014';

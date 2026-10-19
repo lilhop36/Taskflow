@@ -49,7 +49,7 @@ export class AuthController {
    * Exposes GET /api/auth/session
    */
   @Get('session')
-  async session(@CurrentUser() user: UserDocument) {
+  session(@CurrentUser() user: UserDocument) {
     const userObject = user.toObject();
     const { passwordHash: _, ...userWithoutPassword } = userObject;
     return userWithoutPassword;
@@ -67,7 +67,8 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
     @Body('refreshToken') bodyToken?: string,
   ) {
-    const token = req.cookies?.refresh_token || bodyToken;
+    const cookies = req.cookies as Record<string, string | undefined>;
+    const token = cookies?.refresh_token || bodyToken;
     if (!token) {
       throw new UnauthorizedException('Refresh token is required');
     }
@@ -81,7 +82,7 @@ export class AuthController {
   @Public()
   @Post('logout')
   @HttpCode(HttpStatus.OK)
-  async logout(@Res({ passthrough: true }) res: Response) {
+  logout(@Res({ passthrough: true }) res: Response) {
     return this.authService.logout(res);
   }
 }

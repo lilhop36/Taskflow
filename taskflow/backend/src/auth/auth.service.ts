@@ -1,6 +1,6 @@
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import type { ConfigType } from '@nestjs/config';
-import { JwtService } from '@nestjs/jwt';
+import { JwtService, type JwtSignOptions } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import type { Response } from 'express';
 import jwtConfig from '../config/jwt.config';
@@ -59,7 +59,7 @@ export class AuthService {
    * @param user Authenticated user document
    * @param res Optional Express response object to attach HTTP-only cookies
    */
-  async login(user: UserDocument, res?: Response) {
+  login(user: UserDocument, res?: Response) {
     const payload: JwtPayload = {
       sub: user._id.toString(),
       email: user.email,
@@ -69,12 +69,14 @@ export class AuthService {
 
     const accessToken = this.jwtService.sign(payload, {
       secret: this.jwtConfiguration.accessSecret,
-      expiresIn: this.jwtConfiguration.accessExpiresIn as any,
+      expiresIn: this.jwtConfiguration
+        .accessExpiresIn as JwtSignOptions['expiresIn'],
     });
 
     const refreshToken = this.jwtService.sign(payload, {
       secret: this.jwtConfiguration.refreshSecret,
-      expiresIn: this.jwtConfiguration.refreshExpiresIn as any,
+      expiresIn: this.jwtConfiguration
+        .refreshExpiresIn as JwtSignOptions['expiresIn'],
     });
 
     // Attach HTTP-Only Cookies if Response object is provided (XSS Defense)
@@ -133,12 +135,14 @@ export class AuthService {
 
       const accessToken = this.jwtService.sign(newPayload, {
         secret: this.jwtConfiguration.accessSecret,
-        expiresIn: this.jwtConfiguration.accessExpiresIn as any,
+        expiresIn: this.jwtConfiguration
+          .accessExpiresIn as JwtSignOptions['expiresIn'],
       });
 
       const newRefreshToken = this.jwtService.sign(newPayload, {
         secret: this.jwtConfiguration.refreshSecret,
-        expiresIn: this.jwtConfiguration.refreshExpiresIn as any,
+        expiresIn: this.jwtConfiguration
+          .refreshExpiresIn as JwtSignOptions['expiresIn'],
       });
 
       if (res) {
@@ -169,9 +173,7 @@ export class AuthService {
     accessToken: string,
     refreshToken: string,
   ) {
-    const sameSite = (process.env.COOKIE_SAME_SITE || 'lax') as
-      | 'lax'
-      | 'none';
+    const sameSite = (process.env.COOKIE_SAME_SITE || 'lax') as 'lax' | 'none';
     const secure = sameSite === 'none' || process.env.NODE_ENV === 'production';
 
     res.cookie('access_token', accessToken, {
@@ -197,9 +199,7 @@ export class AuthService {
    * overwrite a Secure one, so the session would silently survive logout.
    */
   logout(res: Response) {
-    const sameSite = (process.env.COOKIE_SAME_SITE || 'lax') as
-      | 'lax'
-      | 'none';
+    const sameSite = (process.env.COOKIE_SAME_SITE || 'lax') as 'lax' | 'none';
     const cookieOptions = {
       path: '/',
       secure: sameSite === 'none' || process.env.NODE_ENV === 'production',

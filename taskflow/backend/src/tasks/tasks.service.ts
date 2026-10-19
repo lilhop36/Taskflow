@@ -17,7 +17,7 @@ import {
   VALID_TRANSITIONS,
 } from './dto/update-task-status.dto';
 import { TasksRepository } from './tasks.repository';
-import { TaskStatus } from './schemas/task.schema';
+import { Task, TaskStatus } from './schemas/task.schema';
 import { TaskAssignedEvent } from '../notifications/events/task-assigned.event';
 import { TaskStatusChangedEvent } from '../notifications/events/task-status-changed.event';
 import { TaskDeadlineUrgentEvent } from '../notifications/events/task-deadline-urgent.event';
@@ -101,7 +101,7 @@ export class TasksService {
       );
     }
 
-    const taskData: any = {
+    const taskData: Partial<Task> = {
       title: createTaskDto.title,
       description: createTaskDto.description,
       priority: createTaskDto.priority,
@@ -251,7 +251,9 @@ export class TasksService {
       }
     }
 
-    const updateData: any = { ...updateTaskDto };
+    // Plain-object update payload: `dueDate` arrives as an ISO string in the
+    // DTO and is converted to Date below.
+    const updateData = { ...updateTaskDto } as Partial<Task>;
     if (updateTaskDto.dueDate && dueDateChanged) {
       updateData.dueDate = new Date(updateTaskDto.dueDate);
       // The old deadline's alert is stale — the new due date may need a
@@ -332,7 +334,7 @@ export class TasksService {
 
     // FR-009.2: record the true completion time (updatedAt is unreliable —
     // it changes on any edit, not just completion). Cleared when reopened.
-    const updateData: any = { status: newStatus };
+    const updateData: Partial<Task> = { status: newStatus };
     updateData.completedAt = newStatus === TaskStatus.DONE ? new Date() : null;
 
     // When a completed task is reopened, its previous deadline-urgent alert

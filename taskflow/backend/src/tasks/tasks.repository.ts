@@ -33,7 +33,7 @@ export class TasksRepository {
 
   async findByProject(projectId: string): Promise<TaskDocument[]> {
     return this.taskModel
-      .find({ project: projectId as any })
+      .find({ project: new Types.ObjectId(projectId) })
       .populate('assignee', '-passwordHash')
       .populate('createdBy', '-passwordHash')
       .exec();
@@ -55,7 +55,7 @@ export class TasksRepository {
 
   async findByAssignee(userId: string): Promise<TaskDocument[]> {
     return this.taskModel
-      .find({ assignee: userId as any })
+      .find({ assignee: new Types.ObjectId(userId) })
       .populate('assignee', '-passwordHash')
       .populate('createdBy', '-passwordHash')
       .exec();

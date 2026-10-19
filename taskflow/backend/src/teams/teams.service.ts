@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Types } from 'mongoose';
+import { Team } from './schemas/team.schema';
 import { CreateTeamDto } from './dto/create-team.dto';
 import { UpdateTeamDto } from './dto/update-team.dto';
 import { TeamsRepository } from './teams.repository';
@@ -20,7 +21,7 @@ export class TeamsService {
     return this.teamsRepository.create({
       name: dto.name,
       description: dto.description,
-      members: (dto.members ?? []).map((id) => new Types.ObjectId(id) as any),
+      members: (dto.members ?? []).map((id) => new Types.ObjectId(id)),
     });
   }
 
@@ -41,7 +42,10 @@ export class TeamsService {
     if (!team) {
       throw new NotFoundException('Team not found');
     }
-    const updateData: any = { ...dto };
+    const updateData: Partial<Team> = {
+      name: dto.name,
+      description: dto.description,
+    };
     if (dto.members) {
       updateData.members = dto.members.map((id) => new Types.ObjectId(id));
     }

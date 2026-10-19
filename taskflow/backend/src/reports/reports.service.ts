@@ -10,7 +10,7 @@ import { VisibilityPolicyService } from '../projects/visibility-policy.service';
 import { TasksRepository } from '../tasks/tasks.repository';
 import { UsersService } from '../users/users.service';
 import { UserRole } from '../users/schemas/user.schema';
-import { TaskStatus } from '../tasks/schemas/task.schema';
+import { TaskDocument, TaskStatus } from '../tasks/schemas/task.schema';
 
 /**
  * Service — aggregation engine for all report data.
@@ -239,15 +239,25 @@ export class ReportsService {
     // completedAt is set when the task transitions to Done (FR-009.2).
     // Fall back to updatedAt only for legacy tasks created before the
     // field existed — updatedAt otherwise changes on any edit.
-    const completionTime = (t: any) =>
-      t.completedAt || t.updatedAt || t.createdAt;
+    // `createdAt`/`updatedAt` are added by the schema's timestamps option but
+    // are not declared on the Task class, so they are read through a widened
+    // document type rather than through `any`.
+    const completionTime = (
+      t: TaskDocument & { createdAt?: Date; updatedAt?: Date },
+    ): Date | undefined => t.completedAt ?? t.updatedAt ?? t.createdAt;
 
-    const completedOnTime = tasks.filter(
-      (t) => t.status === TaskStatus.DONE && t.dueDate >= completionTime(t),
-    );
-    const completedLate = tasks.filter(
-      (t) => t.status === TaskStatus.DONE && t.dueDate < completionTime(t),
-    );
+    const completedOnTime = tasks.filter((t) => {
+      const done = completionTime(t);
+      return (
+        t.status === TaskStatus.DONE && done !== undefined && t.dueDate >= done
+      );
+    });
+    const completedLate = tasks.filter((t) => {
+      const done = completionTime(t);
+      return (
+        t.status === TaskStatus.DONE && done !== undefined && t.dueDate < done
+      );
+    });
     const activeWorkload = tasks.filter(
       (t) => t.status !== TaskStatus.DONE && t.dueDate >= now,
     );

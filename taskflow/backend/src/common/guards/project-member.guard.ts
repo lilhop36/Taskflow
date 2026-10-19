@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { VisibilityPolicyService } from '../../projects/visibility-policy.service';
 import { TasksService } from '../../tasks/tasks.service';
-import { UserRole } from '../../users/schemas/user.schema';
+import { AuthenticatedRequest } from '../types/authenticated-request';
 
 /**
  * ProjectMemberGuard — enforces project access for task-scoped routes
@@ -31,11 +31,12 @@ export class ProjectMemberGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
     // Comments nest under :taskId (/tasks/:taskId/comments); the task's own
     // detail route uses :id (/tasks/:id). Accept both param names.
-    const taskId: string | undefined =
-      request.params?.taskId ?? request.params?.id;
+    // Express 5 types params values as `string | string[]`.
+    const rawTaskId = request.params?.taskId ?? request.params?.id;
+    const taskId = Array.isArray(rawTaskId) ? rawTaskId[0] : rawTaskId;
 
     if (!taskId) {
       throw new ForbiddenException('Task ID is required');
@@ -44,8 +45,7 @@ export class ProjectMemberGuard implements CanActivate {
     // Load the parent task — TasksService.findById throws 404 if missing.
     const task = await this.tasksService.findById(taskId);
 
-    const user = request.user as
-      { _id?: { toString(): string }; role?: UserRole } | undefined;
+    const user = request.user;
     if (!user?._id) {
       throw new ForbiddenException('Authenticated user not found');
     }

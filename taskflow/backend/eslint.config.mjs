@@ -29,7 +29,33 @@ export default tseslint.config(
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-floating-promises': 'warn',
       '@typescript-eslint/no-unsafe-argument': 'warn',
+      // The codebase uses a leading underscore to mark intentionally unused
+      // bindings (e.g. `const { passwordHash: _, ...safe } = user`), which is
+      // the standard convention these options implement.
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          ignoreRestSiblings: true,
+        },
+      ],
       "prettier/prettier": ["error", { endOfLine: "auto" }],
+    },
+  },
+  {
+    // Jest mocks are untyped by nature: `expect(mock.method)` (unbound-method)
+    // and `mock.method.mockResolvedValue(...)` (no-unsafe-*) are the documented
+    // way to write these tests, so the type-aware rules are disabled for test
+    // sources only. Production code under src/ stays fully type-checked.
+    files: ['**/*.spec.ts', 'test/**/*.ts', 'test/**/*.cjs'],
+    rules: {
+      '@typescript-eslint/unbound-method': 'off',
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-return': 'off',
+      '@typescript-eslint/no-unsafe-argument': 'off',
     },
   },
 );

@@ -1,4 +1,8 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
+import type {
+  AuthenticatedRequest,
+  TaskView,
+} from '../types/authenticated-request';
 
 /**
  * Custom Parameter Decorator: @Task()
@@ -10,11 +14,11 @@ import { createParamDecorator, ExecutionContext } from '@nestjs/common';
  *
  * Usage:
  *   @UseGuards(ProjectMemberGuard)
- *   async create(@Task() task: any) { ... task.project.toString() ... }
+ *   async create(@Task() task: TaskView) { ... task.project.toString() ... }
  */
 export const Task = createParamDecorator(
-  (_data: unknown, ctx: ExecutionContext) => {
-    const request = ctx.switchToHttp().getRequest();
+  (_data: unknown, ctx: ExecutionContext): TaskView | undefined => {
+    const request = ctx.switchToHttp().getRequest<AuthenticatedRequest>();
     return request.task;
   },
 );

@@ -4,12 +4,13 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
+import { Types } from 'mongoose';
 import { UserRole } from '../users/schemas/user.schema';
 import { UsersService } from '../users/users.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { ProjectsRepository } from './projects.repository';
-import { ProjectStatus } from './schemas/project.schema';
+import { Project, ProjectStatus } from './schemas/project.schema';
 import { VisibilityPolicyService } from './visibility-policy.service';
 
 @Injectable()
@@ -20,7 +21,7 @@ export class ProjectsService {
     private readonly visibilityPolicy: VisibilityPolicyService,
   ) {}
 
-  async create(createProjectDto: CreateProjectDto) {
+  async create(createProjectDto: CreateProjectDto): Promise<Project> {
     const startDate = new Date(createProjectDto.startDate);
     const endDate = new Date(createProjectDto.endDate);
 
@@ -47,16 +48,18 @@ export class ProjectsService {
       description: createProjectDto.description,
       startDate,
       endDate,
-      owner: createProjectDto.owner as any,
-      members: (createProjectDto.members ?? []).map((id) => id as any),
+      owner: new Types.ObjectId(createProjectDto.owner),
+      members: (createProjectDto.members ?? []).map(
+        (id) => new Types.ObjectId(id),
+      ),
     });
 
     return project.toObject();
   }
 
-  async findAll() {
+  async findAll(): Promise<Project[]> {
     const projects = await this.projectsRepository.findAll();
-    return projects.map((p) => p.toObject());
+    return projects.map((p) => p.toObject() as Project);
   }
 
   /**
@@ -85,7 +88,7 @@ export class ProjectsService {
     return projects.map((p) => p.toObject());
   }
 
-  async findById(id: string) {
+  async findById(id: string): Promise<Project> {
     const project = await this.projectsRepository.findById(id);
     if (!project) {
       throw new NotFoundException(`Project with ID ${id} not found`);
@@ -113,7 +116,9 @@ export class ProjectsService {
     // Defense-in-depth: the DTO no longer carries `status` (archiving is only
     // allowed via the dedicated archive endpoint with its BR-003 guard), but
     // strip it here too so a direct service call can never bypass that rule.
-    const updateData: any = { ...updateProjectDto };
+    // Plain-object update payload: the DTO carries ISO date strings for the
+    // bounds, so they are converted to Date below.
+    const updateData = { ...updateProjectDto } as Partial<Project>;
     delete updateData.status;
     if (updateProjectDto.startDate) {
       updateData.startDate = new Date(updateProjectDto.startDate);
@@ -126,10 +131,10 @@ export class ProjectsService {
     if (!updated) {
       throw new NotFoundException(`Project with ID ${id} not found`);
     }
-    return updated.toObject();
+    return updated.toObject() as Project;
   }
 
-  async archive(id: string) {
+  async archive(id: string): Promise<Project> {
     const project = await this.findById(id);
 
     if (project.status === ProjectStatus.ARCHIVED) {

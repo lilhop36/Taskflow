@@ -6,6 +6,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';
 import { SetMetadata } from '@nestjs/common';
+import type { UserDocument } from '../../users/schemas/user.schema';
 
 export const IS_PUBLIC_KEY = 'isPublic';
 /**
@@ -38,14 +39,21 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     return super.canActivate(context);
   }
 
-  override handleRequest(err: any, user: any, info: any) {
+  override handleRequest<TUser = UserDocument>(
+    err: unknown,
+    user: TUser | false,
+    info: unknown,
+  ): TUser {
     if (err || !user) {
-      throw (
-        err ||
-        new UnauthorizedException(
-          info?.message || 'Authentication required to access this resource',
-        )
-      );
+      const reason =
+        (info as { message?: string } | undefined)?.message ??
+        'Authentication required to access this resource';
+      // Passport hands back whatever the strategy rejected with; only Error
+      // instances can be thrown as-is, anything else is normalized to a 401.
+      if (err instanceof Error) {
+        throw err;
+      }
+      throw new UnauthorizedException(reason);
     }
     return user;
   }

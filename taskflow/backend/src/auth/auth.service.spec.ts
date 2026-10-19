@@ -154,8 +154,8 @@ describe('AuthService', () => {
   // ─── login() ──────────────────────────────────────────────────────────────
 
   describe('login()', () => {
-    it('should return accessToken, refreshToken and user without passwordHash (FR-001)', async () => {
-      const result = await service.login(mockUser);
+    it('should return accessToken, refreshToken and user without passwordHash (FR-001)', () => {
+      const result = service.login(mockUser);
 
       expect(result).toHaveProperty('accessToken');
       expect(result).toHaveProperty('refreshToken');
@@ -164,8 +164,8 @@ describe('AuthService', () => {
       expect(result.user).not.toHaveProperty('passwordHash');
     });
 
-    it('should call JwtService.sign twice — once for access, once for refresh', async () => {
-      await service.login(mockUser);
+    it('should call JwtService.sign twice — once for access, once for refresh', () => {
+      service.login(mockUser);
 
       expect(jwtService.sign).toHaveBeenCalledTimes(2);
     });
