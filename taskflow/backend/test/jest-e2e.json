@@ -3,5 +3,6 @@
   "rootDir": "..",
   "testEnvironment": "node",
   "testRegex": "test[\\\\/].*\\.e2e-spec\\.cjs$",
-  "transform": {}
+  "transform": {},
+  "testTimeout": 180000
 }

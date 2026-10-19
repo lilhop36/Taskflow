@@ -15,17 +15,27 @@ const { JwtAuthGuard } = require('../dist/common/guards/jwt-auth.guard');
 const { RolesGuard } = require('../dist/common/guards/roles.guard');
 const { UsersModule } = require('../dist/users/users.module');
 const { UsersService } = require('../dist/users/users.service');
+const { ProjectsService } = require('../dist/projects/projects.service');
+const { TasksService } = require('../dist/tasks/tasks.service');
 const { AuthModule } = require('../dist/auth/auth.module');
 const { ProjectsModule } = require('../dist/projects/projects.module');
 const { TasksModule } = require('../dist/tasks/tasks.module');
 const { CommentsModule } = require('../dist/comments/comments.module');
 const { NotificationsModule } = require('../dist/notifications/notifications.module');
 const { ReportsModule } = require('../dist/reports/reports.module');
+// Registers the Team model; Project documents populate `teams`.
+const { TeamsModule } = require('../dist/teams/teams.module');
 
 describe('TaskFlow API (e2e)', () => {
   let app;
   let mongoServer;
   let adminToken;
+  // Fixtures for the cross-project authorization regression (T-1).
+  let memberToken;
+  let projectBId;
+  let taskBId;
+  let projectATaskId;
+  let pmBToken;
 
   beforeAll(async () => {
     mongoServer = await MongoMemoryServer.create();
@@ -43,6 +53,7 @@ describe('TaskFlow API (e2e)', () => {
         CommentsModule,
         NotificationsModule,
         ReportsModule,
+        TeamsModule,
       ],
       providers: [
         // Mirror production AppModule: secure-by-default global guards, so
@@ -74,6 +85,90 @@ describe('TaskFlow API (e2e)', () => {
       .expect(200);
     adminToken = login.body.accessToken;
     expect(adminToken).toBeDefined();
+
+    // ---- T-1 fixtures -------------------------------------------------
+    // Two unrelated projects. `member` belongs to project A only; project B
+    // has its own PM and a task that member must never be able to touch.
+    const projectsService = moduleFixture.get(ProjectsService);
+    const tasksService = moduleFixture.get(TasksService);
+    const password = 'DemoPass123!';
+
+    const pmA = await usersService.create({
+      firstName: 'PM',
+      lastName: 'Alpha',
+      email: 'e2e.pm.a@taskflow.dev',
+      password,
+      role: 'ProjectManager',
+    });
+    const pmB = await usersService.create({
+      firstName: 'PM',
+      lastName: 'Beta',
+      email: 'e2e.pm.b@taskflow.dev',
+      password,
+      role: 'ProjectManager',
+    });
+    const member = await usersService.create({
+      firstName: 'Team',
+      lastName: 'Member',
+      email: 'e2e.member@taskflow.dev',
+      password,
+      role: 'TeamMember',
+    });
+
+    const projectA = await projectsService.create({
+      name: 'Project Alpha',
+      description: 'Cross-project regression fixture (member\'s project)',
+      startDate: '2026-01-01',
+      endDate: '2026-12-31',
+      owner: pmA._id.toString(),
+      members: [member._id.toString()],
+    });
+    const projectB = await projectsService.create({
+      name: 'Project Beta',
+      description: 'Cross-project regression fixture (foreign project)',
+      startDate: '2026-01-01',
+      endDate: '2026-12-31',
+      owner: pmB._id.toString(),
+    });
+    projectBId = projectB._id.toString();
+
+    const taskB = await tasksService.create(
+      {
+        title: 'Secret Beta task',
+        description: 'Belongs to project B only',
+        priority: 'High',
+        dueDate: '2026-06-01',
+        project: projectBId,
+        assignee: pmB._id.toString(),
+      },
+      pmB._id.toString(),
+    );
+    taskBId = taskB._id.toString();
+
+    const taskA = await tasksService.create(
+      {
+        title: 'Member task',
+        description: 'Belongs to project A',
+        priority: 'Medium',
+        dueDate: '2026-06-01',
+        project: projectA._id.toString(),
+        assignee: member._id.toString(),
+      },
+      pmA._id.toString(),
+    );
+    projectATaskId = taskA._id.toString();
+
+    const memberLogin = await request(app.getHttpServer())
+      .post('/api/auth/login')
+      .send({ email: 'e2e.member@taskflow.dev', password })
+      .expect(200);
+    memberToken = memberLogin.body.accessToken;
+
+    const pmBLogin = await request(app.getHttpServer())
+      .post('/api/auth/login')
+      .send({ email: 'e2e.pm.b@taskflow.dev', password })
+      .expect(200);
+    pmBToken = pmBLogin.body.accessToken;
   });
 
   afterAll(async () => {
@@ -130,6 +225,53 @@ describe('TaskFlow API (e2e)', () => {
         .set(auth())
         .expect(200);
       expect(Array.isArray(res.body)).toBe(true);
+    });
+  });
+
+  // T-1: PATCH /tasks/:id/status used to skip ProjectMemberGuard, so a member
+  // of one project could change any task in any other project by id.
+  describe('Cross-project authorization (T-1)', () => {
+    const memberAuth = () => ({ Authorization: `Bearer ${memberToken}` });
+
+    it('rejects a member editing a task in a project they do not belong to', async () => {
+      await request(app.getHttpServer())
+        .patch(`/api/tasks/${taskBId}/status`)
+        .set(memberAuth())
+        .send({ status: 'In Progress' })
+        .expect(403);
+    });
+
+    it('leaves the foreign task unchanged after the rejected write', async () => {
+      const res = await request(app.getHttpServer())
+        .get(`/api/tasks/${taskBId}`)
+        .set({ Authorization: `Bearer ${pmBToken}` })
+        .expect(200);
+      expect(res.body.status).toBe('To Do');
+    });
+
+    it('rejects reading a task in a foreign project', async () => {
+      await request(app.getHttpServer())
+        .get(`/api/tasks/${taskBId}`)
+        .set(memberAuth())
+        .expect(403);
+    });
+
+    it('still allows a member to change the status of a task in their own project', async () => {
+      const res = await request(app.getHttpServer())
+        .patch(`/api/tasks/${projectATaskId}/status`)
+        .set(memberAuth())
+        .send({ status: 'In Progress' })
+        .expect(200);
+      expect(res.body.status).toBe('In Progress');
+    });
+
+    it('allows the owning PM to change the status of their own task', async () => {
+      const res = await request(app.getHttpServer())
+        .patch(`/api/tasks/${taskBId}/status`)
+        .set({ Authorization: `Bearer ${pmBToken}` })
+        .send({ status: 'In Progress' })
+        .expect(200);
+      expect(res.body.status).toBe('In Progress');
     });
   });
 

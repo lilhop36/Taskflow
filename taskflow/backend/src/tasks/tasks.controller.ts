@@ -88,6 +88,10 @@ export class TasksController {
 
   @Patch(':id/status')
   @Roles(UserRole.TEAM_MEMBER)
+  // T-1: status changes are task-scoped writes and must go through the same
+  // project-membership check as findOne. Without it, a member of project A can
+  // move any task in project B by id.
+  @UseGuards(ProjectMemberGuard)
   @HttpCode(HttpStatus.OK)
   async updateStatus(
     @Param('id', ParseMongoIdPipe) id: string,
