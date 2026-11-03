@@ -16,7 +16,7 @@ a full activity audit trail, and report generation — all wrapped in a 197-test
 ![Mongoose](https://img.shields.io/badge/Mongoose-9-880000?style=flat-square&logo=mongodb&logoColor=white)
 ![Jest](https://img.shields.io/badge/tests-197%20passed-C21325?style=flat-square&logo=jest&logoColor=white)
 ![CI](https://img.shields.io/badge/CI-GitHub%20Actions-2088FF?style=flat-square&logo=githubactions&logoColor=white)
-![License](https://img.shields.io/badge/license-UNLICENSED-lightgrey?style=flat-square)
+![License](https://img.shields.io/badge/license-ISC-blue?style=flat-square)
 
 **[🚀 Live Demo](https://solid-nhs-str-injured.trycloudflare.com)** &nbsp;·&nbsp; **[API Docs](taskflow/docs/API-PARITY.md)** &nbsp;·&nbsp; **[SRS](taskflow/docs/03-software-requirements-specification.md)** &nbsp;·&nbsp; **[Deployment Guide](docs/DEPLOYMENT.md)**
 
