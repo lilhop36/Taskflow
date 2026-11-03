@@ -18,7 +18,10 @@ services:
     runtime: node
     rootDir: taskflow/backend
     plan: free
-    buildCommand: npm ci && npm run build
+    # NODE_ENV=production (below) makes npm skip devDependencies during
+    # install — but the `nest` CLI used by the build IS a devDependency.
+    # --include=dev installs it for the build; runtime stays production-only.
+    buildCommand: npm ci --include=dev && npm run build
     startCommand: npm run start:prod
     healthCheckPath: /api/health
     envVars:
