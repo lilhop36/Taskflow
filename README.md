@@ -36,7 +36,7 @@ where any seeded account below can be used to explore role-scoped views.
 
 > ⚠️ The demo runs through a temporary Cloudflare tunnel from a local machine — it may be offline
 > outside working hours. The backend API is at `https://daughters-elected-expertise-customise.trycloudflare.com/api`.
-> Screenshots are always available — **[hosted gallery →](https://lilhop36.github.io/Taskflow/)** · **[markdown gallery →](docs/SCREENSHOTS.md)**
+> Screenshots are always available — **[gallery →](docs/SCREENSHOTS.md)**
 
 </div>
 
@@ -204,7 +204,7 @@ each role.
 - **[Software Requirements Specification](taskflow/docs/03-software-requirements-specification.md)** — the spec this was built against
 - **[API Parity Matrix](taskflow/docs/API-PARITY.md)** — endpoint ↔ requirement traceability
 - **[Deployment Guide](docs/DEPLOYMENT.md)** — Vercel + Render + Fly.io, seeding, env vars, CI
-- **[Screenshots Gallery](https://lilhop36.github.io/Taskflow/)** — hosted UI captures of the dashboard, tasks, sprints, and projects (always on; see [markdown version](docs/SCREENSHOTS.md))
+- **[Screenshots Gallery](docs/SCREENSHOTS.md)** — UI captures of the dashboard, tasks, sprints, and projects (the raw PNGs live in `docs/screenshots/`)
 - **[Social Preview Card](docs/social-card.png)** — 1280×640 product card; **upload this file** at repo Settings → General → Social preview → Edit to make GitHub repo shares show the product
 - **[Architecture Diagrams](taskflow/diagrams/)** — UML class, sequence, activity, state machine
 - **[Engineering Notes](taskflow/docs/learning-notes/)** — module-by-module build journal
