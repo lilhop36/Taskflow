@@ -1,0 +1,54 @@
+name: Seed database
+
+# Runs the TaskFlow seed script against the production MongoDB Atlas
+# cluster. The connection string lives in the repo secret MONGODB_URI
+# (Settings → Secrets and variables → Actions) — it is never committed.
+#
+# Usage: Actions tab → "Seed database" → Run workflow.
+#   - "Include demo content" = true  → demo accounts + team, project,
+#     6 tasks, and an active sprint (what the login page advertises).
+#   - "Include demo content" = false → demo accounts only.
+#
+# The seed is idempotent: existing accounts get their demo password
+# reset; demo content is created only once.
+
+on:
+  workflow_dispatch:
+    inputs:
+      demo:
+        description: "Include demo content (team, project, tasks, sprint)"
+        type: boolean
+        default: true
+
+concurrency:
+  group: seed-database
+  cancel-in-progress: false
+
+jobs:
+  seed:
+    name: Seed MongoDB Atlas
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: taskflow
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: taskflow/package-lock.json
+
+      - name: Install workspace dependencies
+        run: npm ci
+
+      - name: Seed
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+        run: |
+          if [ "${{ inputs.demo }}" = "true" ]; then
+            npm run seed:demo --workspace backend
+          else
+            npm run seed --workspace backend
+          fi
