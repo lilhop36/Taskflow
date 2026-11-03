@@ -89,8 +89,10 @@ demo content is created only once (keyed on the project name).
 5. Deploy. Wait for the deploy log to finish, then confirm
    `https://taskflow-api.onrender.com/api/health` returns `{"status":"ok","db":"connected"}`.
 
-> Blueprint gotcha: if `npm ci` misbehaves inside the workspace dir, change
-> the service's build command to `cd .. && npm ci && cd backend && npm run build`.
+> Blueprint gotcha: `NODE_ENV=production` makes npm skip devDependencies, so
+> the build command must be `npm ci --include=dev && npm run build` (already
+> set in `render.yaml`) or the `nest` CLI is missing and the build fails with
+> `sh: nest: not found`.
 
 ## 5. Deploy the frontend to Vercel
 
