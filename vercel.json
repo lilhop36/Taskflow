@@ -1,7 +1,15 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "framework": "nextjs",
-  "rootDirectory": "taskflow/frontend",
-  "buildCommand": "npm run build",
-  "installCommand": "npm ci"
+  "services": {
+    "frontend": {
+      "root": "taskflow/frontend",
+      "framework": "nextjs"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": { "service": "frontend" }
+    }
+  ]
 }
